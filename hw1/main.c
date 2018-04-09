@@ -8,10 +8,20 @@
 #include <sys/wait.h>
 
 #include "sema.h"
+#include "readkey.h"
 
 #define SEM_SIZE 4096
+
+#define BACK 158
+#define VOL+ 115
+#define VOL- 114
+
 int main(){
+// prepare variables
 	char buf[SEM_SIZE];
+	int mode=1;	// 초기모드 #1(clock) / fork()후 각 프로세스가 자신의 mode 변수를 가진다.
+	int mode_key;			// readkey()함수 리턴값 받는데 사용
+	int i;
 // prepare semaphore
 	int sem_input,sem_main,sem_output;
 	sem_input = initsem(IPC_PRIVATE,1);		// init_val = 1
@@ -27,12 +37,16 @@ int main(){
 		exit(1);
 	}
 	shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
+	for(i=0;i<SEM_SIZE;i++){
+		shmaddr[i] = '0';	// clear shared memory
+	}
 // prepare fork
 	pid_t pid;
 
 // fork start
 	pid = fork();
-	if(pid==0){	// child 1 - INPUT PROCESS
+// INPUT PROCESS - child 1
+	if(pid==0){	
 		while(1){
 			//shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 			semlock(sem_input);
@@ -40,13 +54,40 @@ int main(){
 				strcpy(shmaddr, "child1 input");
 				printf("INPUT PROCESS : %s\n\n", shmaddr);
 				*/
+				mode_key = readkey();
+				switch(mode_key){
+					case BACK :	// exit program
+						shmaddr[0] = mode;
+						shmaddr[1] = mode_key;
+						shmaddr[2] = '\0';
+						shmdt(shmaddr);	// detach shared memory
+						// device is closed in readkey() above.
+						exit(0);
+						break;
+					case VOL+ : // add mode number
+						shmaddr[0] = mode;
+						shmaddr[1] = mode_key;
+						shmaddr[2] = '\0';
+						break;
+					case VOL- : // subtract mode number
+						shmaddr[0] = mode;
+						shmaddr[1] = mode_key;
+						shmaddr[2] = '\0';
+						break;
+						break;
+					default :	// other key
+						shmaddr[0] = '\0';	// clear shm
+						printf("Wrong key : %d\nkey no. 116 is PROG", mode_key);	// PROG = 116번
+						break;
+				}
 			semunlock(sem_main);
 			sleep(3);
 		}
 	}// end of fork-if
 	else{		// parent - MAIN PROCESS
 		pid = fork();
-		if(pid){// parent - MAIN PROCESS
+// MAIN PROCESS - parent
+		if(pid){
 			while(1){
 				semlock(sem_main);
 					/*
@@ -56,18 +97,70 @@ int main(){
 					strcpy(shmaddr, buf);	// write to shm
 					printf("MAIN PROCESS from shm : %s\n\n", shmaddr);
 					*/
+					//strcpy(buf, shmaddr);
+					switch(shmaddr[1]){	// use mode_key
+						case BACK : // exit program
+							shmdt(shmaddr);	// detach shm
+							exit(0);
+							break;
+						case VOL+ : // add mode number
+							mode = shmaddr[0];
+							mode = mode + 1;
+							if(mode>4) mode = 1;
+							shmaddr[0] = mode;
+							shmaddr[1] = '\0';
+							break;
+						case VOL- : // subtract mode number
+							mode = shmaddr[0];
+							mode = mode - 1;
+							if(mode<1) mode = 4;
+							shmaddr[0] = mode;
+							shmaddr[1] = '\0';
+							break;
+						default :	// other key - do nothing
+							break;
+					}//end of switch
 				semunlock(sem_output);
 				sleep(3);
 			}
 			return 0;
 		}
-		else{	// child 2 - OUTPUT PROCESS
+// OUTPUT PROCESS - child 2
+		else{	
 			while(1){
 				//shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_output);
 					/*
 					printf("OUTPUT PROCESS : %s\n\n\n", shmaddr);
 					*/
+					switch(shmaddr[1]){
+						case BACK : // exit program
+							shmdt(shmaddr);	// detach shm
+							exit(0);
+							break;
+						case VOL+ : // change mode + OR
+						case VOL- : // change mode -
+							switch(shmaddr[0]){
+								case 1 : // clock mode
+									printf("change mode to 1 : clock\n");
+									break;
+								case 2 : // counter mode
+									printf("change mode to 2 : counter\n");
+									break;
+								case 3 : // text editor mode
+									printf("change mode to 3 : text editor\n");
+									break;
+								case 4 : // draw board mode
+									printf("change mode to 4 : draw board\n");
+									break;
+								default :
+									printf("Error on calculating mode number\n");
+									break;
+							}
+							break;
+						default : 	// other key - do nothing
+							break;
+					}//end of switch
 				semunlock(sem_input);
 				sleep(3);
 			}
