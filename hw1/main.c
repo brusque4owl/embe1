@@ -32,44 +32,39 @@ int main(){
 
 // fork start
 	pid = fork();
-	if(pid){	//parent
+	if(pid==0){	// child 1 - INPUT PROCESS
+		while(1){
+			//shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
+			semlock(sem_input);
+				strcpy(shmaddr, "child1 input");
+				printf("INPUT PROCESS : %s\n\n", shmaddr);
+			semunlock(sem_main);
+			sleep(3);
+		}
+	}// end of fork-if
+	else{		// parent - MAIN PROCESS
 		pid = fork();
-		if(pid){ //parent - MAIN PROCESS
+		if(pid){// parent - MAIN PROCESS
 			while(1){
-				//shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_main);
-					//printf("parent : %d\n", pid);
 					strcpy(buf, shmaddr);	// read from shm
-					printf("MAIN PROCESS : %s\n", buf);
+						printf("MAIN PROCESS from buf : %s\n\n", buf);
 					strcat(buf, " -- MAIN read from shm");// compute
-					printf("MAIN PROCESS' buf : %s\n",buf);
 					strcpy(shmaddr, buf);	// write to shm
+						printf("MAIN PROCESS from shm : %s\n\n", shmaddr);
 				semunlock(sem_output);
 				sleep(3);
 			}
 			return 0;
 		}
-		else{		// child 2 - OUTPUT PROCESS
+		else{	// child 2 - OUTPUT PROCESS
 			while(1){
 				//shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_output);
-					//printf("child 2 : %d\n", pid);
-					//strcpy(buf, shmaddr);
-					printf("OUTPUT PROCESS : %s\n\n", shmaddr);
+					printf("OUTPUT PROCESS : %s\n\n\n", shmaddr);
 				semunlock(sem_input);
 				sleep(3);
 			}
 		}
-	}
-	else{			// child 1 - INPUT PROCESS
-		while(1){
-			//shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
-			semlock(sem_input);
-				//printf("child 1 : %d\n", pid);
-				strcpy(shmaddr, "child1 input");
-				printf("INPUT PROCESS : %s\n", shmaddr);
-			semunlock(sem_main);
-			sleep(3);
-		}
-	}
+	}// end of fork-else
 }
