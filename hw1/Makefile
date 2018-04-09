@@ -5,11 +5,13 @@ TARGET	= main
 
 all : $(TARGET)
 
-$(TARGET) : readkey.o sema.o main.o
-	$(CC) $(CFLAGS) -static -o $(TARGET) readkey.o sema.o main.o
+$(TARGET) : switch.o readkey.o sema.o main.o
+	$(CC) $(CFLAGS) -static -o $(TARGET) switch.o readkey.o sema.o main.o
 
+switch.o : switch.c
+	$(CC) $(CFLAGS) -static -c -o switch.o switch.c
 readkey.o : readkey.c
-	$(CC) $(CFALGS) -static -c -o readkey.o readkey.c
+	$(CC) $(CFLAGS) -static -c -o readkey.o readkey.c
 sema.o : sema.c
 	$(CC) $(CFLAGS) -static -c -o sema.o sema.c
 main.o : main.c

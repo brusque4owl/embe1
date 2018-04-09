@@ -6,9 +6,10 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
-
+//---- made header file---//
 #include "sema.h"
 #include "readkey.h"
+#include "switch.h"
 
 #define SEM_SIZE 4096
 
@@ -16,17 +17,24 @@
 #define VOL_PLUS 115
 #define VOL_MINUS 114
 
+#define MAX_BUTTON 9	// for switch
+
 int main(){
 // prepare variables
-	char buf[SEM_SIZE];
-	int mode=1;	// 초기모드 #1(clock) / fork()후 각 프로세스가 자신의 mode 변수를 가진다.
+	char buf[SEM_SIZE];		// shared memory buffer
+	int mode=1;	// 초기모드 #1(clock)
 	int mode_key;			// readkey()함수 리턴값 받는데 사용
-	//int i;
+	int i;
+	char *sw_buff=(char *)malloc(sizeof(char)*MAX_BUTTON);	// switch buffer
+	for(i=0;i<MAX_BUTTON;i++)	// initializing switch buffer
+		sw_buff[i] = 0;
+
 // prepare semaphore
 	int sem_input,sem_main,sem_output;
 	sem_input = initsem(IPC_PRIVATE,1);		// init_val = 1
 	sem_main = initsem(IPC_PRIVATE,0);		// init_val = 0
 	sem_output = initsem(IPC_PRIVATE,0);	// init_val = 0
+
 // prepare shared memory
 	//key_t key;
 	int shmid;
@@ -42,6 +50,7 @@ int main(){
 		shmaddr[i] = '0';	// clear shared memory
 	}
 	*/
+
 // prepare fork
 	pid_t pid;
 
@@ -57,6 +66,15 @@ int main(){
 				printf("INPUT PROCESS : %s\n\n", shmaddr);
 				*/
 				//printf("-------enter readkey()----------\n");
+				for(i=0;i<MAX_BUTTON;i++)	// initializing switch buffer
+					sw_buff[i] = 0;
+				int push_count=0;
+				push_count = read_switch(sw_buff);
+				printf("sw_buff = ");
+				for(i=0;i<MAX_BUTTON;i++)
+					printf("[%d] ",sw_buff[i]);
+				printf("%d\n",push_count);
+
 				mode_key = readkey();
 				printf("mode_key = %d\n", mode_key);
 				switch(mode_key){
@@ -90,7 +108,7 @@ int main(){
 						shmaddr[0] = '\0';	// clear shm
 						printf("input(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
 						break;
-				}
+				}// end of switch(mode_key)
 			semunlock(sem_main);
 			//sleep(3);
 		}

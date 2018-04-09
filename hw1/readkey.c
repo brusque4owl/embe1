@@ -22,7 +22,6 @@ int readkey (void)
 	struct input_event ev[BUFF_SIZE];
 	int fd, rd, value, size = sizeof (struct input_event);
 	int code=0;
-	char name[256] = "Unknown";
 
 	char* device = "/dev/input/event0";
 	if((fd = open (device, O_RDONLY|O_NONBLOCK)) == -1) {  //for read nonblocking
