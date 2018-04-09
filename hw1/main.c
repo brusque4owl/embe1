@@ -36,8 +36,10 @@ int main(){
 		while(1){
 			//shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 			semlock(sem_input);
+				/*
 				strcpy(shmaddr, "child1 input");
 				printf("INPUT PROCESS : %s\n\n", shmaddr);
+				*/
 			semunlock(sem_main);
 			sleep(3);
 		}
@@ -47,11 +49,13 @@ int main(){
 		if(pid){// parent - MAIN PROCESS
 			while(1){
 				semlock(sem_main);
+					/*
 					strcpy(buf, shmaddr);	// read from shm
-						printf("MAIN PROCESS from buf : %s\n\n", buf);
+					printf("MAIN PROCESS from buf : %s\n\n", buf);
 					strcat(buf, " -- MAIN read from shm");// compute
 					strcpy(shmaddr, buf);	// write to shm
-						printf("MAIN PROCESS from shm : %s\n\n", shmaddr);
+					printf("MAIN PROCESS from shm : %s\n\n", shmaddr);
+					*/
 				semunlock(sem_output);
 				sleep(3);
 			}
@@ -61,7 +65,9 @@ int main(){
 			while(1){
 				//shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_output);
+					/*
 					printf("OUTPUT PROCESS : %s\n\n\n", shmaddr);
+					*/
 				semunlock(sem_input);
 				sleep(3);
 			}
