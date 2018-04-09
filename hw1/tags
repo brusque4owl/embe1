@@ -1,0 +1,25 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+BACK	main.c	15;"	d	file:
+BUFF_SIZE	readkey.c	15;"	d	file:
+CC	Makefile	/^CC		= arm-none-linux-gnueabi-gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS	= -W -Wall$/;"	m
+KEY_PRESS	readkey.c	18;"	d	file:
+KEY_RELEASE	readkey.c	17;"	d	file:
+SEM_SIZE	main.c	13;"	d	file:
+TARGET	Makefile	/^TARGET	= main$/;"	m
+VOL_MINUS	main.c	17;"	d	file:
+VOL_PLUS	main.c	16;"	d	file:
+array	sema.h	/^	unsigned short *array;$/;"	m	union:semun
+buf	sema.h	/^	struct semid_ds *buf;$/;"	m	union:semun	typeref:struct:semun::semid_ds
+initsem	sema.c	/^int initsem(key_t semkey, int val){$/;"	f
+main	main.c	/^int main(){$/;"	f
+readkey	readkey.c	/^int readkey (void)$/;"	f
+semlock	sema.c	/^int semlock(int semid){$/;"	f
+semun	sema.h	/^union semun{$/;"	u
+semunlock	sema.c	/^int semunlock(int semid){$/;"	f
+val	sema.h	/^	int val;$/;"	m	union:semun

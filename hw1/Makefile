@@ -1,5 +1,5 @@
-#CC		= arm-none-linux-gnueabi-gcc
-CC		= gcc
+#CC		= gcc
+CC		= arm-none-linux-gnueabi-gcc
 CFLAGS	= -W -Wall
 TARGET	= main
 
