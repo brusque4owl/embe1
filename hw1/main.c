@@ -106,7 +106,7 @@ int main(){
 				read(fd_switch, &push_sw_buff, buff_size);
 				for(i=0;i<MAX_BUTTON;i++){
 					if(push_sw_buff[i]==1){
-						pushed_switch[switch_count]=i;	// i번째 스위치가 눌린것을 저장
+						pushed_switch[switch_count]=i+1;	// i+1번째 스위치가 눌린것을 저장(i+1해야 1부터 스위치 시작)
 						switch_count++;
 					}
 				}
