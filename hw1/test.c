@@ -12,6 +12,7 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <signal.h>
+#include <string.h>
 #include "readkey.h"
 
 #define BUFF_SIZE 64
@@ -21,70 +22,60 @@
 
 #define MAX_BUTTON 9
 
-int readkey (void)
-{
-	struct input_event ev[BUFF_SIZE];
-	int fd, rd, value, size = sizeof (struct input_event);
-	int code=0;
+int main(void){
+	int fd_key, fd_switch, i, code;
+	int switch_count=0;
+	char *buff = (char *)malloc(sizeof(char)*MAX_BUTTON);
+	int buff_size, count=0;
 
-	char* device = "/dev/input/event0";
-	if((fd = open (device, O_RDONLY|O_NONBLOCK)) == -1) {  //for read nonblocking
-		printf ("%s is not a vaild device.n", device);
+	struct input_event ev[BUFF_SIZE];
+	int rd, value, size = sizeof (struct input_event);
+//open key
+	char* key_dev = "/dev/input/event0";
+	if((fd_key = open (key_dev, O_RDONLY|O_NONBLOCK)) == -1) {  //for read nonblocking
+		printf ("%s is not a vaild device.n", key_dev );
 	}
-	// ioctl (fd, EVIOCGNAME (sizeof (name)), name);
-	// printf ("Reading From : %s (%s)n", device, name);
-	if( (rd = read (fd, ev, size * BUFF_SIZE)) >= size){ //for read nonblocking
+
+//open switch
+	unsigned char push_sw_buff[MAX_BUTTON];
+	fd_switch = open("/dev/fpga_push_switch", O_RDWR);
+	if(fd_switch<0){
+		printf("Device Open Error\n");
+		close(fd_key);
+		return -1;
+	}
+while(1){
+// read key
+	if( (rd = read (fd_key, ev, size * BUFF_SIZE)) >= size){ //for read nonblocking
 		value = ev[0].value;
 
 		if (value != ' ' && ev[1].value == 1 && ev[1].type == 1){ // Only read the key press event
 			printf ("code%d\n", (ev[1].code));
 		}
-		//printf ("Type[%d] Value[%d] Code[%d]\n", ev[0].type, ev[0].value, (ev[0].code));
 		code = ev[0].code;
-	}
-	close(fd);
-	if(rd==-1) return -1;
-	return code;
-}
+		printf("key = %d\n", code);
 
-int readswitch(char *buff){
-	int i;
-	int dev;
-	int buff_size, count=0;
-	unsigned char push_sw_buff[MAX_BUTTON];
-	dev = open("/dev/fpga_push_switch", O_RDWR);
-	if(dev<0){
-		printf("Device Open Error\n");
-		close(dev);
-		return -1;
 	}
 
+// read switch
 	buff_size = sizeof(push_sw_buff);
-	read(dev, &push_sw_buff, buff_size);
+	read(fd_switch, &push_sw_buff, buff_size);
 	for(i=0;i<MAX_BUTTON;i++){
 		if(push_sw_buff[i]==1)
-			count++;
+			switch_count++;
+		//printf("[%d] ", push_sw_buff[i]);
 	}
-	/*
-	for(i=0;i<MAX_BUTTON;i++){
-		printf("[%d] ",push_sw_buff[i]);
+	//printf("\n");
+	if(switch_count>0){
+		for(i=0;i<MAX_BUTTON;i++){
+			printf("[%d] ", push_sw_buff[i]);
+		}
+		printf("\n");
+	
 	}
-	printf("\n");
-	*/
-	strcpy(buff, push_sw_buff);
-	close(dev);
-	return count;
-}
+}// end of while
+	close(fd_key);
+	close(fd_switch);
 
-int main(void){
-	int code;
-	int switch_count;
-	char *buff = (char *)malloc(sizeof(char)*MAX_BUTTON);
-	while(1){
-		code = readkey();
-		switch_count = readswitch(buff);
-		if(code!=-1){printf("pushed code = %d\n",code); /*break;*/}		// 눌린 키가 있으면 나가기
-		if(switch_count>0){printf("switch contents = %s\n",buff); /*break;*/}// 스위치 눌리면 나가기
-	}
 	return 0;
 }

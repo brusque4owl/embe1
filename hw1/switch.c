@@ -37,7 +37,7 @@ int read_switch(char *sw_buff)
 		}
 		printf("[%d] ", sw_buff[i]);
 	}
-	printf("%d\tbuff size = %d\tread return = %d\n",push_count, buff_size,read_return);
+	printf("push_count = %d\n",push_count);
 
 	strcpy(sw_buff, push_sw_buff);
 	close(dev);

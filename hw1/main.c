@@ -1,19 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <linux/input.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <signal.h>
+#include <string.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
 //---- made header file---//
 #include "sema.h"
-//#include "readkey.h"
-//#include "switch.h"
-#include "read.h"
 
 #define SEM_SIZE 4096
-
+#define BUFF_SIZE 64
 #define BACK 158
 #define VOL_PLUS 115
 #define VOL_MINUS 114
@@ -22,13 +29,33 @@
 
 int main(){
 // prepare variables
-	char buf[SEM_SIZE];		// shared memory buffer
+	//char buf[SEM_SIZE];		// shared memory buffer
 	int mode=1;	// 초기모드 #1(clock)
-	int mode_key;			// readkey()함수 리턴값 받는데 사용
 	int i;
-	char *sw_buff=(char *)malloc(sizeof(char)*MAX_BUTTON);	// switch buffer
-	for(i=0;i<MAX_BUTTON;i++)	// initializing switch buffer
-		sw_buff[i] = 0;
+
+// prepare read_key, read_switch
+	int fd_key, fd_switch, mode_key;//mode key : 모드받는변수
+	int switch_count = 0;	// 몇개 눌렸는지 체크
+	int buff_size;
+	struct input_event ev[BUFF_SIZE];
+	int rd, value,size=sizeof(struct input_event);// for readkey
+
+	char *key_dev = "/dev/input/event0";
+	char *switch_dev = "/dev/fpga_push_switch";
+
+	unsigned char push_sw_buff[MAX_BUTTON];
+
+// open key device, switch device
+	if((fd_key = open(key_dev, O_RDONLY|O_NONBLOCK))==-1){
+		printf("%s is not a valid device\n", key_dev);
+	}
+
+	fd_switch = open(switch_dev, O_RDWR);
+	if(fd_switch<0){
+		printf("Device Open Error\n");
+		close(fd_key);
+		return -1;
+	}
 
 // prepare semaphore
 	int sem_input,sem_main,sem_output;
@@ -45,12 +72,6 @@ int main(){
 		perror("shmget");
 		exit(1);
 	}
-	/*
-	shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
-	for(i=0;i<SEM_SIZE;i++){
-		shmaddr[i] = '0';	// clear shared memory
-	}
-	*/
 
 // prepare fork
 	pid_t pid;
@@ -59,28 +80,39 @@ int main(){
 	pid = fork();
 // INPUT PROCESS - child 1
 	if(pid==0){	
+		mode = 1;		// 초기모드 1
 		while(1){
 			shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 			semlock(sem_input);
-				/*
-				strcpy(shmaddr, "child1 input");
-				printf("INPUT PROCESS : %s\n\n", shmaddr);
-				*/
-				for(i=0;i<MAX_BUTTON;i++)	// initializing switch buffer
-					sw_buff[i] = 0;
+		// initialize
+				mode_key = 0;
 
-				int push_count=0;
+		// read key
+				if((rd=read(fd_key, ev, size * BUFF_SIZE))>=size){
+					value = ev[0].value;
+					if(value!=' '&&ev[1].value==1&&ev[1].type==1){
+						printf("code%d\n", ev[1].code);
+					}
+					mode_key = ev[0].code;
+					printf("key = %d\n",mode_key);
+				}
 
 		// read switch
-				push_count = read_switch(sw_buff);
-				printf("sw_buff = ");
-				for(i=0;i<MAX_BUTTON;i++)
-					printf("[%d] ",sw_buff[i]);
-				printf("%d\n",push_count);
-		// read key
-				mode_key = readkey();
-				printf("mode_key = %d\n", mode_key);
+				switch_count = 0;
+				buff_size = sizeof(push_sw_buff);
+				read(fd_switch, &push_sw_buff, buff_size);
+				for(i=0;i<MAX_BUTTON;i++){
+					if(push_sw_buff[i]==1)
+						switch_count++;
+				}
+				if(switch_count>0){
+					for(i=0;i<MAX_BUTTON;i++){
+						printf("[%d] ",push_sw_buff[i]);
+					}
+					printf("\n");
+				}
 
+		// check switch
 				switch(mode_key){
 					case BACK :	// exit program
 						shmaddr[0] = mode;
@@ -106,7 +138,8 @@ int main(){
 						if(mode < 1) mode = 4;
 						break;
 					default :	// other key
-						shmaddr[0] = '\0';	// clear shm
+						shmaddr[0] = mode;	// 갖고 있던 mode
+						shmaddr[1] = 0;		// 누른키 없음
 						printf("input(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
 						break;
 				}// end of switch(mode_key)
