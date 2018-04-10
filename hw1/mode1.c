@@ -22,6 +22,7 @@
 #define VOL_PLUS 115
 #define VOL_MINUS 114
 
+// UPDATE SHARED MEMORY FUNCTION
 __inline void update_shm(char *shmaddr, int hour, int minute){
 	shmaddr[1] = hour/10;
 	shmaddr[2] = hour%10;
@@ -68,13 +69,6 @@ int mode1(char *shmaddr){
 	if(flag_clock_change==true){	//SW1으로 변경모드에 들어감
 		switch(shmaddr[2]){
 			case SW1 :
-				/*
-				shmaddr[1] = hour/10;
-				shmaddr[2] = hour%10;
-				shmaddr[3] = minute/10;
-				shmaddr[4] = minute%10;
-				shmaddr[5] = '\0';
-				*/
 				update_shm(shmaddr, hour, minute);
 				break;
 			case SW2 : // 보드 시간으로 reset
@@ -91,25 +85,11 @@ int mode1(char *shmaddr){
 				}
 				hour = gm_time_string->tm_hour; 	// update hour, minute variables
 				minute = gm_time_string->tm_min;
-				/*
-				shmaddr[1] = hour/10;  				// update shared memory
-				shmaddr[2] = hour%10;
-				shmaddr[3] = minute/10;
-				shmaddr[4] = minute%10;
-				shmaddr[5] = '\0';
-				*/
 				update_shm(shmaddr, hour, minute);
 				break;
 			case SW3 : // 시간 증가
 				hour++;
 				if(hour>23) hour=0;
-				/*
-				shmaddr[1] = hour/10;
-				shmaddr[2] = hour%10;
-				shmaddr[3] = minute/10;
-				shmaddr[4] = minute%10;
-				shmaddr[5] = '\0';
-				*/
 				update_shm(shmaddr, hour, minute);
 				break;
 			case SW4 : // 분 증가
@@ -119,23 +99,9 @@ int mode1(char *shmaddr){
 					if(hour>23) hour=0;
 					minute=0;
 				}
-				/*
-				shmaddr[1] = hour/10;
-				shmaddr[2] = hour%10;
-				shmaddr[3] = minute/10;
-				shmaddr[4] = minute%10;
-				shmaddr[5] = '\0';
-				*/
 				update_shm(shmaddr, hour, minute);
 				break;
 			default : 	// 시간 변경 모드로 간 뒤 가만히 있을 때 - 지금까지 변경사항을 넘겨줌
-				/*
-				shmaddr[1] = hour/10;
-				shmaddr[2] = hour%10;
-				shmaddr[3] = minute/10;
-				shmaddr[4] = minute%10;
-				shmaddr[5] = '\0';
-				*/
 				update_shm(shmaddr, hour, minute);
 				break;
 		}
@@ -143,16 +109,9 @@ int mode1(char *shmaddr){
 	else{ // flag_clock_change==false - 모드 처음 진입과 변경 내역 저장을 제외하고는 아무것도 안함
 		switch(shmaddr[2]){
 			case 1 :	// flag가 true에서 false로 바뀌면 저장해야함.
-				/*
-				shmaddr[1] = hour/10; 
-				shmaddr[2] = hour%10;
-				shmaddr[3] = minute/10;
-				shmaddr[4] = minute%10;
-				shmaddr[5] = '\0';
-				*/
 				update_shm(shmaddr, hour, minute);
 				break;
-			case 2 :
+			case 2 :	// 수정모드가 아닐 때는 저장된 시간을 출력해준다.
 			case 3 :
 			case 4 :
 				update_shm(shmaddr, hour, minute);
@@ -172,28 +131,13 @@ int mode1(char *shmaddr){
 					}
 					hour = gm_time_string->tm_hour; 	// update hour, minute variables
 					minute = gm_time_string->tm_min;
-					/*
-					shmaddr[1] = hour/10;  				// update shared memory
-					shmaddr[2] = hour%10;
-					shmaddr[3] = minute/10;
-					shmaddr[4] = minute%10;
-					shmaddr[5] = '\0';
-					*/
 					update_shm(shmaddr, hour, minute);
 					break;
 				}
 				else{					// 변경 내역 저장 후 가만히 있을 때.
-					/*
-					shmaddr[1] = hour/10;  				// update shared memory
-					shmaddr[2] = hour%10;
-					shmaddr[3] = minute/10;
-					shmaddr[4] = minute%10;
-					shmaddr[5] = '\0';
-					*/
 					update_shm(shmaddr, hour, minute);
 					break;
 				}
-				//break;
 		}
 	}// END of else(보드 시간으로 초기화)
 	return 0;
