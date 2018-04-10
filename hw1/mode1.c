@@ -155,6 +155,7 @@ int mode1(char *shmaddr){
 			case 2 :
 			case 3 :
 			case 4 :
+				update_shm(shmaddr, hour, minute);
 				break;
 			default :	
 				if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){	// 모드1 진입 시, 보드 시간으로 초기화 
