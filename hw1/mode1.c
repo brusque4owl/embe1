@@ -18,6 +18,9 @@
 #define SW3	3
 #define SW4 4
 
+#define VOL_PLUS 115
+#define VOL_MINUS 114
+
 /*
 INPUT PROCESS에서 전달해주는 shared memeory 형식
 ------------------------------
@@ -33,6 +36,22 @@ int mode1(char *shmaddr){
 	time_t current_time;
 	struct tm *gm_time_string;
 	gm_time_string = (struct tm *)malloc(sizeof(struct tm));
+
+	if(shmaddr[5]==1){  // 모드1 최초진입시에만 사용(시간 초기화)
+		current_time = time(NULL);
+		if(current_time == ((time_t)-1)){
+			(void)fprintf(stderr, "Failure to obtain the current time.\n");
+			return -1;
+		}
+		/* Convert to local time format. */
+		gm_time_string = localtime(&current_time);
+		if(gm_time_string == NULL){
+			(void)fprintf(stderr,"Failure to convert the current time.\n");
+			return -1;
+		}
+		hour = gm_time_string->tm_hour; 	// update hour, minute variables
+		minute = gm_time_string->tm_min;
+	}
 
 	if(shmaddr[2]==SW1){	// SW1의 경우 flag 바꿔주기
 		if(flag_clock_change==false) flag_clock_change=true;
@@ -89,11 +108,16 @@ int mode1(char *shmaddr){
 				shmaddr[4] = minute%10;
 				shmaddr[5] = '\0';
 				break;
-			default : 	// 시간 변경 모드로 간 뒤 가만히 있을 때
+			default : 	// 시간 변경 모드로 간 뒤 가만히 있을 때 - 지금까지 변경사항을 넘겨줌
+				shmaddr[1] = hour/10;
+				shmaddr[2] = hour%10;
+				shmaddr[3] = minute/10;
+				shmaddr[4] = minute%10;
+				shmaddr[5] = '\0';
 				break;
 		}
 	}// END of if(flag_clock_change==true)
-	else{ // flag_clock_change==false - 모드 처음 진입 제외하고는 아무것도 안함
+	else{ // flag_clock_change==false - 모드 처음 진입과 변경 내역 저장을 제외하고는 아무것도 안함
 		switch(shmaddr[2]){
 			case 1 :	// flag가 true에서 false로 바뀌면 저장해야함.
 				shmaddr[1] = hour/10; 
@@ -106,26 +130,37 @@ int mode1(char *shmaddr){
 			case 3 :
 			case 4 :
 				break;
-			default :	// 모드1 진입 시, 보드 시간으로 초기화
-				current_time = time(NULL);
-				if(current_time == ((time_t)-1)){
-					(void)fprintf(stderr, "Failure to obtain the current time.\n");
-					return -1;
+			default :	
+				if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){	// 모드1 진입 시, 보드 시간으로 초기화 
+					current_time = time(NULL);
+					if(current_time == ((time_t)-1)){
+						(void)fprintf(stderr, "Failure to obtain the current time.\n");
+						return -1;
+					}
+					/* Convert to local time format. */
+					gm_time_string = localtime(&current_time);
+					if(gm_time_string == NULL){
+						(void)fprintf(stderr,"Failure to convert the current time.\n");
+						return -1;
+					}
+					hour = gm_time_string->tm_hour; 	// update hour, minute variables
+					minute = gm_time_string->tm_min;
+					shmaddr[1] = hour/10;  				// update shared memory
+					shmaddr[2] = hour%10;
+					shmaddr[3] = minute/10;
+					shmaddr[4] = minute%10;
+					shmaddr[5] = '\0';
+					break;
 				}
-				/* Convert to local time format. */
-				gm_time_string = localtime(&current_time);
-				if(gm_time_string == NULL){
-					(void)fprintf(stderr,"Failure to convert the current time.\n");
-					return -1;
+				else{					// 변경 내역 저장 후 가만히 있을 때.
+					shmaddr[1] = hour/10;  				// update shared memory
+					shmaddr[2] = hour%10;
+					shmaddr[3] = minute/10;
+					shmaddr[4] = minute%10;
+					shmaddr[5] = '\0';
+					break;
 				}
-				hour = gm_time_string->tm_hour; 	// update hour, minute variables
-				minute = gm_time_string->tm_min;
-				shmaddr[1] = hour/10;  				// update shared memory
-				shmaddr[2] = hour%10;
-				shmaddr[3] = minute/10;
-				shmaddr[4] = minute%10;
-				shmaddr[5] = '\0';
-				break;
+				//break;
 		}
 	}// END of else(보드 시간으로 초기화)
 	return 0;

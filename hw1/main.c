@@ -186,10 +186,13 @@ int main(){
 		pid = fork();
 // MAIN PROCESS - parent ---------------------------------------------------------------------------------------------
 		if(pid){
+			int main_counter=0;	// main 프로세스 카운터(모드1 최초진입 판별용)
 			while(1){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
+				if(main_counter==0) shmaddr[5]=1;	// 모드1 최초진입시에만 사용
+				else				shmaddr[5]='\0';
 				semlock(sem_main);
-		// 1-1. check mode key is changed or not
+		// 1. check mode key is changed or not
 					switch(shmaddr[1]){	// read mode_key
 						case BACK : // exit program
 							shmdt(shmaddr);	// detach shm
@@ -209,28 +212,27 @@ int main(){
 							if(mode<1) mode = 4;
 							shmaddr[0] = mode;
 							break;
-		// 1-2. Enter the mode
-						default :	// other key - 해당 모드로 진입
-							switch(mode){
-								case MODE1 :
-									strcpy(buf, shmaddr);
-									mode1(shmaddr);
-									break;
-								case MODE2 :
-									break;
-								case MODE3 :
-									break;
-								case MODE4 :
-									break;
-								default :	// 이런 경우는 없음
-									printf("mode value is wrong. check INPUT PROCESS or MAIN PROCESS\n");
-									break;
-							}
-							//printf("main(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
+					}// end of switch(shmaddr[1])
+		// 2. Enter the mode (모드 값 계산 후에 해당 모드로 바로 들어가야함.)
+						//default :	// other key - 해당 모드로 진입
+					switch(mode){
+						case MODE1 :
+							strcpy(buf, shmaddr);
+							mode1(shmaddr);
 							break;
-					}//end of switch
+						case MODE2 :
+							break;
+						case MODE3 :
+							break;
+						case MODE4 :
+							break;
+						default :	// 이런 경우는 없음
+							printf("mode value is wrong. check INPUT PROCESS or MAIN PROCESS\n");
+							break;
+					}// end of switch(mode)
 					printf("main - mode = %d\t hour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 				semunlock(sem_output);
+				main_counter++;
 			}
 			//return 0;
 		}
@@ -267,10 +269,10 @@ int main(){
 							}
 							break;
 						default : 	// other key - do nothing
-							printf("output(other key) - %d\t%d\n\n",shmaddr[0], shmaddr[1]);
 							break;
 					}//end of switch
-					printf("output - mode = %d\t mode_key = %d\n\n",shmaddr[0], shmaddr[1]);
+					printf("output - mode = %d\t hour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+
 			// clear shared memory
 					for(i=0;i<SHM_SIZE;i++)
 						shmaddr[i]='\0';
