@@ -66,39 +66,26 @@ int main(){
 				strcpy(shmaddr, "child1 input");
 				printf("INPUT PROCESS : %s\n\n", shmaddr);
 				*/
-				//printf("-------enter readkey()----------\n");
 				for(i=0;i<MAX_BUTTON;i++)	// initializing switch buffer
 					sw_buff[i] = 0;
-				/*
-				int push_count;
-				do{
-					
-					printf("enter readkey()\n");
-					sleep(1);
-					mode_key = readkey();
-					sleep(1);
-					printf("enter read_switch()\n");
-					push_count = read_switch(sw_buff);
-					printf("\n\t----push_count = %d\t mode_key = %d\t-----\n",push_count, mode_key);
-				}while(push_count<1 && mode_key<1);	// push_count와 mode_key가 0이면 반복
-				
 
+				int push_count=0;
+
+		// read switch
+				push_count = read_switch(sw_buff);
 				printf("sw_buff = ");
 				for(i=0;i<MAX_BUTTON;i++)
 					printf("[%d] ",sw_buff[i]);
 				printf("%d\n",push_count);
-				
-				//mode_key = readkey();
+		// read key
+				mode_key = readkey();
 				printf("mode_key = %d\n", mode_key);
-				*/
-				mode_key = read_key_sw(sw_buff);
-				printf("mode_key = %d\n", mode_key);
+
 				switch(mode_key){
 					case BACK :	// exit program
 						shmaddr[0] = mode;
 						shmaddr[1] = mode_key;
 						shmaddr[2] = '\0';
-						printf("input - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 						shmdt(shmaddr);	// detach shared memory
 						// device is closed in readkey() above.
 						//exit(0);
@@ -110,7 +97,6 @@ int main(){
 						shmaddr[2] = '\0';
 						mode = mode + 1;
 						if(mode > 4) mode = 1;
-						printf("input - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 						break;
 					case VOL_MINUS : // subtract mode number
 						shmaddr[0] = mode;
@@ -118,13 +104,13 @@ int main(){
 						shmaddr[2] = '\0';
 						mode = mode - 1;
 						if(mode < 1) mode = 4;
-						printf("input - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 						break;
 					default :	// other key
 						shmaddr[0] = '\0';	// clear shm
 						printf("input(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
 						break;
 				}// end of switch(mode_key)
+				printf("input - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 			semunlock(sem_main);
 			//sleep(3);
 		}
@@ -146,7 +132,6 @@ int main(){
 					//strcpy(buf, shmaddr);
 					switch(shmaddr[1]){	// use mode_key
 						case BACK : // exit program
-							printf("main - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 							shmdt(shmaddr);	// detach shm
 							//exit(0);
 							return 0;
@@ -157,7 +142,6 @@ int main(){
 							if(mode>4) mode = 1;
 							shmaddr[0] = mode;
 							//shmaddr[1] = '\0';
-							printf("main - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 							break;
 						case VOL_MINUS : // subtract mode number
 							mode = shmaddr[0];
@@ -165,12 +149,12 @@ int main(){
 							if(mode<1) mode = 4;
 							shmaddr[0] = mode;
 							//shmaddr[1] = '\0';
-							printf("main - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 							break;
 						default :	// other key - do nothing
 							printf("main(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
 							break;
 					}//end of switch
+					printf("main - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 				semunlock(sem_output);
 				//sleep(3);
 			}
@@ -186,7 +170,6 @@ int main(){
 					*/
 					switch(shmaddr[1]){
 						case BACK : // exit program
-							printf("output - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 							shmdt(shmaddr);	// detach shm
 							//exit(0);
 							//return 0;
@@ -210,12 +193,12 @@ int main(){
 									printf("Error on calculating mode number\n");
 									break;
 							}
-							printf("output - mode = %d\t mode_key = %d\n\n",shmaddr[0], shmaddr[1]);
 							break;
 						default : 	// other key - do nothing
 							printf("output(other key) - %d\t%d\n\n",shmaddr[0], shmaddr[1]);
 							break;
 					}//end of switch
+					printf("output - mode = %d\t mode_key = %d\n\n",shmaddr[0], shmaddr[1]);
 				semunlock(sem_input);
 				//sleep(3);
 			}
