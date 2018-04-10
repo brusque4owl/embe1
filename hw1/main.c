@@ -19,18 +19,24 @@
 #include <sys/wait.h>
 //---- made header file---//
 #include "sema.h"
+#include "mode1.h"
 
-#define SEM_SIZE 4096
+#define SHM_SIZE 1024
 #define BUFF_SIZE 64
 #define BACK 158
 #define VOL_PLUS 115
 #define VOL_MINUS 114
 
+#define MODE1 1
+#define MODE2 2
+#define MODE3 3
+#define MODE4 4
+
 #define MAX_BUTTON 9	// for switch
 
 int main(){
 // prepare variables
-	//char buf[SEM_SIZE];		// shared memory buffer
+	char buf[SHM_SIZE];		// shared memory buffer
 	int mode=1;	// 초기모드 #1(clock)
 	int i;
 
@@ -70,7 +76,7 @@ int main(){
 	//key_t key;
 	int shmid;
 	char *shmaddr;
-	shmid = shmget(IPC_PRIVATE, SEM_SIZE, IPC_CREAT | 0644);
+	shmid = shmget(IPC_PRIVATE, SHM_SIZE, IPC_CREAT | 0644);
 	if(shmid == -1){
 		perror("shmget");
 		exit(1);
@@ -81,7 +87,7 @@ int main(){
 
 // fork start
 	pid = fork();
-// INPUT PROCESS - child 1
+// INPUT PROCESS - child 1 ------------------------------------------------------------------------------------------------
 	if(pid==0){	
 		mode = 1;		// 초기모드 1
 		while(1){
@@ -147,9 +153,9 @@ int main(){
 						mode = mode - 1;		// remember mode
 						if(mode < 1) mode = 4;
 						break;
-					default :	// other key
+					default :	// other key - 모드 키 안누르는 경우에도 기존의 mode값은 전송해야함.
 						shmaddr[0] = mode;	// 갖고 있던 mode
-						shmaddr[1] = 0;		// 누른키 없음
+						shmaddr[1] = '\0';		// 누른키 없음
 						//printf("input(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
 						break;
 				}// end of switch(mode_key)
@@ -163,10 +169,12 @@ int main(){
 				else if(switch_count==1){
 					shmaddr[2] = pushed_switch[0];
 					shmaddr[3] = '\0';
+					shmaddr[4] = '\0';
 				}
 				else{
 					shmaddr[2] = '\0';
 					shmaddr[3] = '\0';
+					shmaddr[4] = '\0';
 				}
 
 		// 5. print input process	
@@ -176,14 +184,17 @@ int main(){
 	}// end of fork-if
 	else{		// parent - MAIN PROCESS
 		pid = fork();
-// MAIN PROCESS - parent
+// MAIN PROCESS - parent ---------------------------------------------------------------------------------------------
 		if(pid){
 			while(1){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_main);
+		// 1-1. check mode key is changed or not
 					switch(shmaddr[1]){	// read mode_key
 						case BACK : // exit program
 							shmdt(shmaddr);	// detach shm
+							close(fd_key);	// close device file descriptor
+							close(fd_switch);
 							return 0;
 							break;
 						case VOL_PLUS : // add mode number
@@ -198,17 +209,32 @@ int main(){
 							if(mode<1) mode = 4;
 							shmaddr[0] = mode;
 							break;
-						default :	// other key - do nothing
-							printf("main(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
+		// 1-2. Enter the mode
+						default :	// other key - 해당 모드로 진입
+							switch(mode){
+								case MODE1 :
+									strcpy(buf, shmaddr);
+									mode1(shmaddr);
+									break;
+								case MODE2 :
+									break;
+								case MODE3 :
+									break;
+								case MODE4 :
+									break;
+								default :	// 이런 경우는 없음
+									printf("mode value is wrong. check INPUT PROCESS or MAIN PROCESS\n");
+									break;
+							}
+							//printf("main(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
 							break;
 					}//end of switch
-					printf("main - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
+					printf("main - mode = %d\t hour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 				semunlock(sem_output);
-				//sleep(3);
 			}
 			//return 0;
 		}
-// OUTPUT PROCESS - child 2
+// OUTPUT PROCESS - child 2 ----------------------------------------------------------------------------------------------------
 		else{	
 			while(1){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
@@ -245,7 +271,11 @@ int main(){
 							break;
 					}//end of switch
 					printf("output - mode = %d\t mode_key = %d\n\n",shmaddr[0], shmaddr[1]);
+			// clear shared memory
+					for(i=0;i<SHM_SIZE;i++)
+						shmaddr[i]='\0';
 				semunlock(sem_input);
+				
 			}
 		}
 	}// end of fork-else

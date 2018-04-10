@@ -20,12 +20,16 @@ KEY_RELEASE	origin_readkey.c	16;"	d	file:
 KEY_RELEASE	read.c	22;"	d	file:
 KEY_RELEASE	readkey.c	17;"	d	file:
 KEY_RELEASE	test.c	20;"	d	file:
-MAX_BUTTON	main.c	29;"	d	file:
+MAX_BUTTON	main.c	34;"	d	file:
 MAX_BUTTON	read.c	24;"	d	file:
 MAX_BUTTON	switch.c	13;"	d	file:
 MAX_BUTTON	switch_nonblock.c	14;"	d	file:
 MAX_BUTTON	test.c	23;"	d	file:
-SEM_SIZE	main.c	23;"	d	file:
+MODE1	main.c	29;"	d	file:
+MODE2	main.c	30;"	d	file:
+MODE3	main.c	31;"	d	file:
+MODE4	main.c	32;"	d	file:
+SHM_SIZE	main.c	23;"	d	file:
 SWITCH_PUSHED	read.c	25;"	d	file:
 SWITCH_PUSHED	switch.c	14;"	d	file:
 TARGET	Makefile	/^TARGET	= main$/;"	m
