@@ -119,9 +119,6 @@ int main(){
 						shmaddr[1] = mode_key;
 						shmaddr[2] = '\0';
 						shmdt(shmaddr);	// detach shared memory
-						// device is closed in readkey() above.
-						//exit(0);
-						//return 0;
 						break;
 					case VOL_PLUS : // add mode number
 						shmaddr[0] = mode;
@@ -145,7 +142,6 @@ int main(){
 				}// end of switch(mode_key)
 				printf("input - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
 			semunlock(sem_main);
-			//sleep(3);
 		}
 	}// end of fork-if
 	else{		// parent - MAIN PROCESS
@@ -155,14 +151,6 @@ int main(){
 			while(1){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_main);
-					/*
-					strcpy(buf, shmaddr);	// read from shm
-					printf("MAIN PROCESS from buf : %s\n\n", buf);
-					strcat(buf, " -- MAIN read from shm");// compute
-					strcpy(shmaddr, buf);	// write to shm
-					printf("MAIN PROCESS from shm : %s\n\n", shmaddr);
-					*/
-					//strcpy(buf, shmaddr);
 					switch(shmaddr[1]){	// use mode_key
 						case BACK : // exit program
 							shmdt(shmaddr);	// detach shm
@@ -204,8 +192,6 @@ int main(){
 					switch(shmaddr[1]){
 						case BACK : // exit program
 							shmdt(shmaddr);	// detach shm
-							//exit(0);
-							//return 0;
 							break;
 						case VOL_PLUS : // change mode + OR
 						case VOL_MINUS : // change mode -
@@ -233,7 +219,6 @@ int main(){
 					}//end of switch
 					printf("output - mode = %d\t mode_key = %d\n\n",shmaddr[0], shmaddr[1]);
 				semunlock(sem_input);
-				//sleep(3);
 			}
 		}
 	}// end of fork-else
