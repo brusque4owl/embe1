@@ -32,6 +32,7 @@
 #define MODE3 3
 #define MODE4 4
 
+#define FND_DEVICE "/dev/fpga_fnd"
 #define MAX_BUTTON 9	// for switch
 
 int main(){
@@ -53,6 +54,17 @@ int main(){
 	unsigned char push_sw_buff[MAX_BUTTON];
 	//bool flag_2_switch = false;	// 스위치 2개가 동시에 눌렸는지 확인
 	int pushed_switch[2];		// 몇번 스위치가 눌렸는지 기억
+
+// prepare FND_DEVICE open
+	int fd_fnd;
+// Open FND_DEVICE
+	fd_fnd = open(FND_DEVICE, O_RDWR);
+	if(fd_fnd<0){
+		printf("Device open error : %s\n", FND_DEVICE);
+		return -1;
+	}
+
+
 
 // open key device, switch device
 	if((fd_key = open(key_dev, O_RDONLY|O_NONBLOCK))==-1){
@@ -196,8 +208,10 @@ int main(){
 					switch(shmaddr[1]){	// read mode_key
 						case BACK : // exit program
 							shmdt(shmaddr);	// detach shm
-							close(fd_key);	// close device file descriptor
+						// close device file descriptor
+							close(fd_key);	
 							close(fd_switch);
+							close(fd_fnd);
 							return 0;
 							break;
 						case VOL_PLUS : // add mode number
@@ -230,7 +244,7 @@ int main(){
 							printf("mode value is wrong. check INPUT PROCESS or MAIN PROCESS\n");
 							break;
 					}// end of switch(mode)
-					printf("main - mode = %d\t hour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					printf("main - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 				semunlock(sem_output);
 				main_counter++;
 			}
@@ -238,40 +252,54 @@ int main(){
 		}
 // OUTPUT PROCESS - child 2 ----------------------------------------------------------------------------------------------------
 		else{	
+			int retval;	// check for write
 			while(1){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_output);
 					/*
 					printf("OUTPUT PROCESS : %s\n\n\n", shmaddr);
 					*/
+					/*
 					switch(shmaddr[1]){
 						case BACK : // exit program
 							shmdt(shmaddr);	// detach shm
 							break;
 						case VOL_PLUS : // change mode + OR
 						case VOL_MINUS : // change mode -
-							switch(shmaddr[0]){
-								case 1 : // clock mode
-									printf("change mode to 1 : clock\n");
-									break;
-								case 2 : // counter mode
-									printf("change mode to 2 : counter\n");
-									break;
-								case 3 : // text editor mode
-									printf("change mode to 3 : text editor\n");
-									break;
-								case 4 : // draw board mode
-									printf("change mode to 4 : draw board\n");
-									break;
-								default :
-									printf("Error on calculating mode number\n");
-									break;
-							}
+							
 							break;
 						default : 	// other key - do nothing
 							break;
 					}//end of switch
-					printf("output - mode = %d\t hour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					*/
+					switch(shmaddr[0]){
+						case 1 : // clock mode
+							printf("change mode to 1 : clock\n");
+				// CLOCK MODE : WRITE TO FND_DEVICE
+						// 버퍼를 이용하여 shm에서 시간만 뽑아내기
+							for(i=1;i<5;i++){
+								buf[i-1]=shmaddr[i];}
+							buf[i]='\0';
+							retval = write(fd_fnd, &buf, 4);
+							if(retval<0){
+								printf("Write Error!\n");
+								return -1;
+							}
+							break;
+						case 2 : // counter mode
+							printf("change mode to 2 : counter\n");
+							break;
+						case 3 : // text editor mode
+							printf("change mode to 3 : text editor\n");
+							break;
+						case 4 : // draw board mode
+							printf("change mode to 4 : draw board\n");
+							break;
+						default :
+							printf("Error on calculating mode number\n");
+							break;
+					}
+					printf("output - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 
 			// clear shared memory
 					for(i=0;i<SHM_SIZE;i++)
