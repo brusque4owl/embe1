@@ -8,8 +8,9 @@
 #include <sys/wait.h>
 //---- made header file---//
 #include "sema.h"
-#include "readkey.h"
-#include "switch.h"
+//#include "readkey.h"
+//#include "switch.h"
+#include "read.h"
 
 #define SEM_SIZE 4096
 
@@ -68,14 +69,29 @@ int main(){
 				//printf("-------enter readkey()----------\n");
 				for(i=0;i<MAX_BUTTON;i++)	// initializing switch buffer
 					sw_buff[i] = 0;
-				int push_count=0;
-				push_count = read_switch(sw_buff);
+				/*
+				int push_count;
+				do{
+					
+					printf("enter readkey()\n");
+					sleep(1);
+					mode_key = readkey();
+					sleep(1);
+					printf("enter read_switch()\n");
+					push_count = read_switch(sw_buff);
+					printf("\n\t----push_count = %d\t mode_key = %d\t-----\n",push_count, mode_key);
+				}while(push_count<1 && mode_key<1);	// push_count와 mode_key가 0이면 반복
+				
+
 				printf("sw_buff = ");
 				for(i=0;i<MAX_BUTTON;i++)
 					printf("[%d] ",sw_buff[i]);
 				printf("%d\n",push_count);
-
-				mode_key = readkey();
+				
+				//mode_key = readkey();
+				printf("mode_key = %d\n", mode_key);
+				*/
+				mode_key = read_key_sw(sw_buff);
 				printf("mode_key = %d\n", mode_key);
 				switch(mode_key){
 					case BACK :	// exit program
