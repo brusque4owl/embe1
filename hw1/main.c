@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -44,6 +45,8 @@ int main(){
 	char *switch_dev = "/dev/fpga_push_switch";
 
 	unsigned char push_sw_buff[MAX_BUTTON];
+	//bool flag_2_switch = false;	// 스위치 2개가 동시에 눌렸는지 확인
+	int pushed_switch[2];		// 몇번 스위치가 눌렸는지 기억
 
 // open key device, switch device
 	if((fd_key = open(key_dev, O_RDONLY|O_NONBLOCK))==-1){
@@ -87,7 +90,7 @@ int main(){
 		// initialize
 				mode_key = 0;
 
-		// read key
+		// 1. read key
 				if((rd=read(fd_key, ev, size * BUFF_SIZE))>=size){
 					value = ev[0].value;
 					if(value!=' '&&ev[1].value==1&&ev[1].type==1){
@@ -97,22 +100,34 @@ int main(){
 					printf("key = %d\n",mode_key);
 				}
 
-		// read switch
+		// 2. read switch
 				switch_count = 0;
 				buff_size = sizeof(push_sw_buff);
 				read(fd_switch, &push_sw_buff, buff_size);
 				for(i=0;i<MAX_BUTTON;i++){
-					if(push_sw_buff[i]==1)
+					if(push_sw_buff[i]==1){
+						pushed_switch[switch_count]=i;	// i번째 스위치가 눌린것을 저장
 						switch_count++;
+					}
 				}
+				/*
+				switch(switch_count){
+					case 2 :	// 2개 스위치가 동시에 눌린 경우
+						flag_2_switch = true;
+						break;
+					default :
+						break;
+				}
+				*/
+				/* //print switches
 				if(switch_count>0){
 					for(i=0;i<MAX_BUTTON;i++){
 						printf("[%d] ",push_sw_buff[i]);
 					}
-					printf("\n");
-				}
+					printf("switch_count = %d\n",switch_count);
+				}*/
 
-		// check switch
+		// 3. check mode_key
 				switch(mode_key){
 					case BACK :	// exit program
 						shmaddr[0] = mode;
@@ -123,24 +138,39 @@ int main(){
 					case VOL_PLUS : // add mode number
 						shmaddr[0] = mode;
 						shmaddr[1] = mode_key;
-						shmaddr[2] = '\0';
-						mode = mode + 1;
+						mode = mode + 1;		// remember mode
 						if(mode > 4) mode = 1;
 						break;
 					case VOL_MINUS : // subtract mode number
 						shmaddr[0] = mode;
 						shmaddr[1] = mode_key;
-						shmaddr[2] = '\0';
-						mode = mode - 1;
+						mode = mode - 1;		// remember mode
 						if(mode < 1) mode = 4;
 						break;
 					default :	// other key
 						shmaddr[0] = mode;	// 갖고 있던 mode
 						shmaddr[1] = 0;		// 누른키 없음
-						printf("input(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
+						//printf("input(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
 						break;
 				}// end of switch(mode_key)
-				printf("input - mode = %d\t mode_key = %d\n",shmaddr[0], shmaddr[1]);
+
+		// 4. check switch
+				if(switch_count==2){
+					shmaddr[2] = pushed_switch[0];
+					shmaddr[3] = pushed_switch[1];
+					shmaddr[4] = '\0';
+				}
+				else if(switch_count==1){
+					shmaddr[2] = pushed_switch[0];
+					shmaddr[3] = '\0';
+				}
+				else{
+					shmaddr[2] = '\0';
+					shmaddr[3] = '\0';
+				}
+
+		// 5. print input process	
+				printf("input - mode = %d  mode_key = %d  switch1 = %d  switch2 = %d\n",shmaddr[0], shmaddr[1],shmaddr[2],shmaddr[3]);
 			semunlock(sem_main);
 		}
 	}// end of fork-if
@@ -151,10 +181,9 @@ int main(){
 			while(1){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_main);
-					switch(shmaddr[1]){	// use mode_key
+					switch(shmaddr[1]){	// read mode_key
 						case BACK : // exit program
 							shmdt(shmaddr);	// detach shm
-							//exit(0);
 							return 0;
 							break;
 						case VOL_PLUS : // add mode number
@@ -162,14 +191,12 @@ int main(){
 							mode = mode + 1;
 							if(mode>4) mode = 1;
 							shmaddr[0] = mode;
-							//shmaddr[1] = '\0';
 							break;
 						case VOL_MINUS : // subtract mode number
 							mode = shmaddr[0];
 							mode = mode - 1;
 							if(mode<1) mode = 4;
 							shmaddr[0] = mode;
-							//shmaddr[1] = '\0';
 							break;
 						default :	// other key - do nothing
 							printf("main(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
