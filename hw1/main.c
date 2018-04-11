@@ -39,7 +39,7 @@
 #define SWITCH_DEVICE "/dev/fpga_push_switch"
 #define FPGA_BASE_ADDRESS 0x08000000 //fpga_base address
 #define LED_ADDR 0x16
-
+//#define CLOCK_PER_SEC 100000
 #define MAX_BUTTON 9	// for switch
 __inline void delay(clock_t second){
 	clock_t start = clock();
