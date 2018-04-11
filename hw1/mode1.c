@@ -42,6 +42,8 @@ INPUT PROCESS에서 전달해주는 shared memeory 형식
 int mode1(char *shmaddr){
 	static int hour, minute;				// MAIN PROCESS가 따로 보관하는 시간과 분
 	static bool flag_clock_change = false;	// 시간,분을 변경하는지 아닌지 체크하는 플래그
+	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS)	// mode 변경으로 진입시 수정 플래그 false로 세팅
+		flag_clock_change = false;
 // variables for get board time
 	time_t current_time;
 	struct tm *gm_time_string;
