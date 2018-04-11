@@ -40,11 +40,12 @@
 #define SWITCH_DEVICE "/dev/fpga_push_switch"
 #define FPGA_BASE_ADDRESS 0x08000000 //fpga_base address
 #define LED_ADDR 0x16
-//#define CLOCK_PER_SEC 100000
 #define MAX_BUTTON 9	// for switch
+
+#define CLOCK_PER_SEC 100000	// CLOCKS_PER_SEC in <time.h> is 1000000
 __inline void delay(clock_t second){
 	clock_t start = clock();
-	while(clock()-start < CLOCKS_PER_SEC*second);
+	while(clock()-start < CLOCK_PER_SEC*second);
 }
 
 int main(){
@@ -248,7 +249,7 @@ int main(){
 							break;
 					}// end of switch(mode)
 					//printf("main - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
-					printf("main\t\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3]);
+					printf("main - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 				semunlock(sem_output);
 				main_counter++;
 			}
@@ -263,7 +264,7 @@ int main(){
 					switch(shmaddr[0]){
 						case 1 : // clock mode
 							printf("change mode to 1 : clock\n");
-				// CLOCK MODE : WRITE TO FND_DEVICE
+				// CLOCK MODE : WRITE to FND_DEVICE and LED_DEVICE
 						// 버퍼를 이용하여 shm에서 시간만 뽑아내기
 							for(i=1;i<5;i++){
 								buf[i-1]=shmaddr[i];}
@@ -285,6 +286,17 @@ int main(){
 							break;
 						case 2 : // counter mode
 							printf("change mode to 2 : counter\n");
+				// COUNTER MODE : WRITE to FND_DEVICE and LED_DEVICE
+							for(i=1;i<5;i++){
+								buf[i-1]=shmaddr[i];}
+							buf[i]='\0';
+							delay(1);
+							retval = write(fd_fnd, &buf, 4);
+							if(retval<0){
+								printf("Write Error!\n");
+								return -1;
+							}
+							// led below
 							break;
 						case 3 : // text editor mode
 							printf("change mode to 3 : text editor\n");
@@ -296,7 +308,8 @@ int main(){
 							printf("Error on calculating mode number\n");
 							break;
 					}// END OF SWITCH
-					printf("output - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					//printf("output - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					printf("output - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 
 			// clear shared memory
 					for(i=0;i<SHM_SIZE;i++)
