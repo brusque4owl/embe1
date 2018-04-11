@@ -18,6 +18,7 @@
 #include <sys/shm.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <time.h>
 //---- made header file---//
 #include "sema.h"
 #include "mode1.h"
@@ -40,6 +41,10 @@
 #define LED_ADDR 0x16
 
 #define MAX_BUTTON 9	// for switch
+__inline void delay(clock_t second){
+	clock_t start = clock();
+	while(clock()-start < 1000*second);
+}
 
 int main(){
 // prepare variables
@@ -168,7 +173,6 @@ int main(){
 					default :	// other key - 모드 키 안누르는 경우에도 기존의 mode값은 전송해야함.
 						shmaddr[0] = mode;	// 갖고 있던 mode
 						shmaddr[1] = '\0';		// 누른키 없음
-						//printf("input(other key) - %d\t%d\n",shmaddr[0], shmaddr[1]);
 						break;
 				}// end of switch(mode_key)
 
@@ -176,18 +180,15 @@ int main(){
 				if(switch_count==2){
 					shmaddr[2] = pushed_switch[0];
 					shmaddr[3] = pushed_switch[1];
-					shmaddr[4] = '\0';
+					i = 4;	// 아래에서 청소하기 위해 기억
 				}
 				else if(switch_count==1){
 					shmaddr[2] = pushed_switch[0];
-					shmaddr[3] = '\0';
-					shmaddr[4] = '\0';
-				}
+					i = 3;}
 				else{
-					shmaddr[2] = '\0';
-					shmaddr[3] = '\0';
-					shmaddr[4] = '\0';
-				}
+					i = 2;}
+				for(;i<7;i++)
+					shmaddr[i] = '\0';
 
 		// 5. print input process	
 				printf("input - mode = %d  mode_key = %d  switch1 = %d  switch2 = %d\n",shmaddr[0], shmaddr[1],shmaddr[2],shmaddr[3]);
