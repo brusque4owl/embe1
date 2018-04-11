@@ -22,6 +22,7 @@
 //---- made header file---//
 #include "sema.h"
 #include "mode1.h"
+#include "mode2.h"
 
 #define SHM_SIZE 1024
 #define BUFF_SIZE 64
@@ -236,6 +237,7 @@ int main(){
 							mode1(shmaddr);
 							break;
 						case MODE2 :
+							mode2(shmaddr);
 							break;
 						case MODE3 :
 							break;
@@ -245,7 +247,8 @@ int main(){
 							printf("mode value is wrong. check INPUT PROCESS or MAIN PROCESS\n");
 							break;
 					}// end of switch(mode)
-					printf("main - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					//printf("main - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					printf("main\t\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3]);
 				semunlock(sem_output);
 				main_counter++;
 			}
