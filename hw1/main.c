@@ -17,6 +17,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 //---- made header file---//
 #include "sema.h"
 #include "mode1.h"
@@ -35,6 +36,9 @@
 #define FND_DEVICE "/dev/fpga_fnd"
 #define KEY_DEVICE "/dev/input/event0"
 #define SWITCH_DEVICE "/dev/fpga_push_switch"
+#define FPGA_BASE_ADDRESS 0x08000000 //fpga_base address
+#define LED_ADDR 0x16
+
 #define MAX_BUTTON 9	// for switch
 
 int main(){
@@ -73,7 +77,22 @@ int main(){
 		printf("Device open error : %s\n", FND_DEVICE);
 		return -1;
 	}
-
+// open LED_DEVICE
+	unsigned long *fpga_addr = 0;
+	unsigned char *led_addr = 0;
+	fd_led = open("/dev/mem", O_RDWR | O_SYNC);
+	if(fd_led<0){
+		perror("/dev/mem open error");
+		exit(1);
+	}
+	fpga_addr = (unsigned long *)mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd_led, FPGA_BASE_ADDRESS);
+	if (fpga_addr == MAP_FAILED){   
+		printf("mmap error!\n");
+		close(fd_led);
+		exit(1);
+	}   
+	// led data레지스터의 주소값 0x08000016
+	led_addr=(unsigned char*)((void*)fpga_addr+LED_ADDR);
 
 
 // prepare semaphore
@@ -193,6 +212,7 @@ int main(){
 							close(fd_key);	
 							close(fd_switch);
 							close(fd_fnd);
+							close(fd_led);
 							return 0;
 							break;
 						case VOL_PLUS : // add mode number
