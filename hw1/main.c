@@ -269,6 +269,10 @@ int main(){
 								printf("Write Error!\n");
 								return -1;
 							}
+							if(shmaddr[5]==1)	// 수정모드 : 3번:2^5 / 4번:2^4
+								*led_addr = 32;
+							else				// 저장모드 : 1번:2^7
+								*led_addr = 128;
 							break;
 						case 2 : // counter mode
 							printf("change mode to 2 : counter\n");
