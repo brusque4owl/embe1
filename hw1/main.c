@@ -232,7 +232,6 @@ int main(){
 						//default :	// other key - 해당 모드로 진입
 					switch(mode){
 						case MODE1 :
-							strcpy(buf, shmaddr);
 							mode1(shmaddr);
 							break;
 						case MODE2 :

@@ -28,7 +28,7 @@ __inline void update_shm(char *shmaddr, int hour, int minute, bool flag){
 	shmaddr[2] = hour%10;
 	shmaddr[3] = minute/10;
 	shmaddr[4] = minute%10;
-	if(flag==true) shmaddr[5]='1';
+	if(flag==true) shmaddr[5]=1;
 	else		   shmaddr[5] = '\0';
 }
 /*
