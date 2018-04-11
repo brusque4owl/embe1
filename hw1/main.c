@@ -189,7 +189,7 @@ int main(){
 					i = 3;}
 				else{
 					i = 2;}
-				for(;i<7;i++)
+				for(;i<5;i++)
 					shmaddr[i] = '\0';
 
 		// 5. print input process	
@@ -281,6 +281,7 @@ int main(){
 								*led_addr = 16;
 							}
 							else{				// 저장모드 : 1번:2^7
+								delay(1);	// 이게 없으면 위에서 delay두번으로 인해 SW1이 짝수로만 눌리게됨
 								*led_addr = 128;
 							}
 							break;
@@ -310,6 +311,7 @@ int main(){
 					}// END OF SWITCH
 					//printf("output - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 					printf("output - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					printf("shmaddr[6] = %d\n",shmaddr[6]);
 
 			// clear shared memory
 					for(i=0;i<SHM_SIZE;i++)

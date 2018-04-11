@@ -30,6 +30,7 @@ __inline void update_shm_mode1(char *shmaddr, int hour, int minute, bool flag){
 	shmaddr[4] = minute%10;
 	shmaddr[5] = '\0';
 	if(flag==true) shmaddr[6]=1;
+	else		   shmaddr[6]=0;
 }
 /*
 INPUT PROCESS에서 전달해주는 shared memeory 형식
@@ -70,7 +71,6 @@ int mode1(char *shmaddr){
 	if(flag_clock_change==true){	//SW1으로 변경모드에 들어감
 		switch(shmaddr[2]){
 			case SW1 :
-				update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 				break;
 			case SW2 : // 보드 시간으로 reset
 				current_time = time(NULL);
@@ -86,12 +86,10 @@ int mode1(char *shmaddr){
 				}
 				hour = gm_time_string->tm_hour; 	// update hour, minute variables
 				minute = gm_time_string->tm_min;
-				update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 				break;
 			case SW3 : // 시간 증가
 				hour++;
 				if(hour>23) hour=0;
-				update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 				break;
 			case SW4 : // 분 증가
 				minute++;
@@ -100,22 +98,19 @@ int mode1(char *shmaddr){
 					if(hour>23) hour=0;
 					minute=0;
 				}
-				update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 				break;
 			default : 	// 시간 변경 모드로 간 뒤 가만히 있을 때 - 지금까지 변경사항을 넘겨줌
-				update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 				break;
 		}
+		update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 	}// END of if(flag_clock_change==true)
 	else{ // flag_clock_change==false - 모드 처음 진입과 변경 내역 저장을 제외하고는 아무것도 안함
 		switch(shmaddr[2]){
 			case SW1 :	// flag가 true에서 false로 바뀌면 저장해야함.
-				update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 				break;
 			case SW2 :	// 수정모드가 아닐 때는 저장된 시간을 출력해준다.
 			case SW3 :
 			case SW4 :
-				update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 				break;
 			default :	
 				if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){	// 모드1 진입 시, 보드 시간으로 초기화 
@@ -132,14 +127,13 @@ int mode1(char *shmaddr){
 					}
 					hour = gm_time_string->tm_hour; 	// update hour, minute variables
 					minute = gm_time_string->tm_min;
-					update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 					break;
 				}
 				else{					// 변경 내역 저장 후 가만히 있을 때.
-					update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 					break;
 				}
 		}
+		update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 	}// END of else(보드 시간으로 초기화)
 	return 0;
 }
