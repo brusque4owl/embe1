@@ -34,7 +34,7 @@
 
 #define FND_DEVICE "/dev/fpga_fnd"
 #define KEY_DEVICE "/dev/input/event0"
-#define SWITCH_DEVICE "/dev/fpag_push_switch"
+#define SWITCH_DEVICE "/dev/fpga_push_switch"
 #define MAX_BUTTON 9	// for switch
 
 int main(){
