@@ -250,6 +250,7 @@ int main(){
 					}// end of switch(mode)
 					//printf("main - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 					printf("main - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					printf("shmaddr[6] = %d\n", shmaddr[6]);
 				semunlock(sem_output);
 				main_counter++;
 			}
@@ -274,16 +275,43 @@ int main(){
 								printf("Write Error!\n");
 								return -1;
 							}
+							/*기존코드
 							if(shmaddr[6]==1){	// 수정모드 : 3번:2^5 / 4번:2^4
-								delay(1);
+								delay(5);
 								*led_addr = 32;
-								delay(1);
+								delay(5);
 								*led_addr = 16;
 							}
 							else{				// 저장모드 : 1번:2^7
 								delay(1);	// 이게 없으면 위에서 delay두번으로 인해 SW1이 짝수로만 눌리게됨
 								*led_addr = 128;
 							}
+							*/ //기존코드 끝
+							
+							/// 실험 코드 시작
+							if(shmaddr[6]==1){	// 수정모드
+								delay(1);	// 이게 없으면 SW1이 짝수로만 눌림
+								static int flag_blink=0;
+								static int blink_value=16; 
+								clock_t blink_time;
+								if(flag_blink==0){
+									blink_time=clock();
+									flag_blink = 1;
+								}
+								clock_t elapsed_time = clock();
+								if(elapsed_time - blink_time>CLOCKS_PER_SEC){
+									if( (blink_value+16)%32==0 )	*led_addr = 32;
+									else							*led_addr = 16;
+									flag_blink=0;
+									blink_value = blink_value+16;
+								}
+							}
+							else{				// 저장모드 : 1번:2^7
+								delay(1);	// 이게 없으면 SW1이 짝수로만 눌림
+								*led_addr = 128;
+							}
+							/// 실험 코드 끝
+							
 							break;
 // COUNTER MODE : WRITE to FND_DEVICE and LED_DEVICE
 						case 2 : // counter mode
@@ -330,9 +358,11 @@ int main(){
 					printf("output - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 					printf("shmaddr[6] = %d\n",shmaddr[6]);
 
+			
 			// clear shared memory
-					for(i=0;i<SHM_SIZE;i++)
+					for(i=0;i<SHM_SIZE;i++){
 						shmaddr[i]='\0';
+					}
 				semunlock(sem_input);
 				
 			}
