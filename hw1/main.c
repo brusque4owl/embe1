@@ -43,7 +43,7 @@
 #define MAX_BUTTON 9	// for switch
 __inline void delay(clock_t second){
 	clock_t start = clock();
-	while(clock()-start < 1000*second);
+	while(clock()-start < CLOCKS_PER_SEC*second);
 }
 
 int main(){
@@ -271,7 +271,10 @@ int main(){
 								return -1;
 							}
 							if(shmaddr[6]==1){	// 수정모드 : 3번:2^5 / 4번:2^4
+								delay(1);
 								*led_addr = 32;
+								delay(1);
+								*led_addr = 16;
 							}
 							else{				// 저장모드 : 1번:2^7
 								*led_addr = 128;
