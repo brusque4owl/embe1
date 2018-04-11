@@ -84,6 +84,25 @@ __inline void update_shm_mode2(char *shmaddr, int num, int base){
 		shmaddr[4]=0;
 	}
 	shmaddr[5]='\0';	// shmaddr[5]
+	
+	// treat LED below
+	switch(base){
+		case 10 :
+			shmaddr[6]=10;
+			break;
+		case 8 :
+			shmaddr[6]=8;
+			break;
+		case 4 :
+			shmaddr[6]=4;
+			break;
+		case 2 :
+			shmaddr[6]=2;
+			break;
+		default :
+			printf("base is just 10, 8, 4, 2. check base or shmaddr[6]\n");
+			break;
+	}
 }
 
 int mode2(char *shmaddr){

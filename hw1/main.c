@@ -262,9 +262,9 @@ int main(){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_output);
 					switch(shmaddr[0]){
+// CLOCK MODE : WRITE to FND_DEVICE and LED_DEVICE
 						case 1 : // clock mode
 							printf("change mode to 1 : clock\n");
-				// CLOCK MODE : WRITE to FND_DEVICE and LED_DEVICE
 						// 버퍼를 이용하여 shm에서 시간만 뽑아내기
 							for(i=1;i<5;i++){
 								buf[i-1]=shmaddr[i];}
@@ -285,9 +285,9 @@ int main(){
 								*led_addr = 128;
 							}
 							break;
+// COUNTER MODE : WRITE to FND_DEVICE and LED_DEVICE
 						case 2 : // counter mode
 							printf("change mode to 2 : counter\n");
-				// COUNTER MODE : WRITE to FND_DEVICE and LED_DEVICE
 							for(i=1;i<5;i++){
 								buf[i-1]=shmaddr[i];}
 							buf[i]='\0';
@@ -298,6 +298,23 @@ int main(){
 								return -1;
 							}
 							// led below
+							switch(shmaddr[6]){
+								case 10 :
+									*led_addr = 64;	// 10진수 = 2번 LED
+									break;
+								case 8 :
+									*led_addr = 32;	//  8진수 = 3번 LED
+									break;
+								case 4 :
+									*led_addr = 16; //  4진수 = 4번 LED
+									break;
+								case 2 :
+									*led_addr = 128;//  2진수 = 1번 LED
+									break;
+								default :
+									printf("shmaddr[6] means the base. So check the base in mode2().\n");
+									break;
+							}
 							break;
 						case 3 : // text editor mode
 							printf("change mode to 3 : text editor\n");
