@@ -4,50 +4,33 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-BACK	main.c	25;"	d	file:
-BUFF_SIZE	main.c	24;"	d	file:
-BUFF_SIZE	origin_readkey.c	14;"	d	file:
-BUFF_SIZE	read.c	20;"	d	file:
-BUFF_SIZE	readkey.c	15;"	d	file:
-BUFF_SIZE	test.c	18;"	d	file:
+BACK	main.c	26;"	d	file:
+BUFF_SIZE	main.c	25;"	d	file:
 CC	Makefile	/^CC		= arm-none-linux-gnueabi-gcc$/;"	m
 CFLAGS	Makefile	/^CFLAGS	= -W -Wall$/;"	m
-KEY_PRESS	origin_readkey.c	17;"	d	file:
-KEY_PRESS	read.c	23;"	d	file:
-KEY_PRESS	readkey.c	18;"	d	file:
-KEY_PRESS	test.c	21;"	d	file:
-KEY_RELEASE	origin_readkey.c	16;"	d	file:
-KEY_RELEASE	read.c	22;"	d	file:
-KEY_RELEASE	readkey.c	17;"	d	file:
-KEY_RELEASE	test.c	20;"	d	file:
-MAX_BUTTON	main.c	34;"	d	file:
-MAX_BUTTON	read.c	24;"	d	file:
-MAX_BUTTON	switch.c	13;"	d	file:
-MAX_BUTTON	switch_nonblock.c	14;"	d	file:
-MAX_BUTTON	test.c	23;"	d	file:
-MODE1	main.c	29;"	d	file:
-MODE2	main.c	30;"	d	file:
-MODE3	main.c	31;"	d	file:
-MODE4	main.c	32;"	d	file:
-SHM_SIZE	main.c	23;"	d	file:
-SWITCH_PUSHED	read.c	25;"	d	file:
-SWITCH_PUSHED	switch.c	14;"	d	file:
+FND_DEVICE	main.c	35;"	d	file:
+MAX_BUTTON	main.c	36;"	d	file:
+MODE1	main.c	30;"	d	file:
+MODE2	main.c	31;"	d	file:
+MODE3	main.c	32;"	d	file:
+MODE4	main.c	33;"	d	file:
+SHM_SIZE	main.c	24;"	d	file:
+SW1	mode1.c	17;"	d	file:
+SW2	mode1.c	18;"	d	file:
+SW3	mode1.c	19;"	d	file:
+SW4	mode1.c	20;"	d	file:
 TARGET	Makefile	/^TARGET	= main$/;"	m
-VOL_MINUS	main.c	27;"	d	file:
-VOL_PLUS	main.c	26;"	d	file:
+VOL_MINUS	main.c	28;"	d	file:
+VOL_MINUS	mode1.c	23;"	d	file:
+VOL_PLUS	main.c	27;"	d	file:
+VOL_PLUS	mode1.c	22;"	d	file:
 array	sema.h	/^	unsigned short *array;$/;"	m	union:semun
 buf	sema.h	/^	struct semid_ds *buf;$/;"	m	union:semun	typeref:struct:semun::semid_ds
 initsem	sema.c	/^int initsem(key_t semkey, int val){$/;"	f
 main	main.c	/^int main(){$/;"	f
-main	origin_readkey.c	/^int main (int argc, char *argv[])$/;"	f
-main	switch_nonblock.c	/^int main(void)$/;"	f
-main	test.c	/^int main(void){$/;"	f
-quit	switch_nonblock.c	/^unsigned char quit = 0;$/;"	v
-read_key_sw	read.c	/^int read_key_sw (char *sw_buff)$/;"	f
-read_switch	switch.c	/^int read_switch(char *sw_buff)$/;"	f
-readkey	readkey.c	/^int readkey (void)$/;"	f
+mode1	mode1.c	/^int mode1(char *shmaddr){$/;"	f
 semlock	sema.c	/^int semlock(int semid){$/;"	f
 semun	sema.h	/^union semun{$/;"	u
 semunlock	sema.c	/^int semunlock(int semid){$/;"	f
-user_signal1	switch_nonblock.c	/^void user_signal1(int sig) $/;"	f
+update_shm	mode1.c	/^__inline void update_shm(char *shmaddr, int hour, int minute){$/;"	f
 val	sema.h	/^	int val;$/;"	m	union:semun

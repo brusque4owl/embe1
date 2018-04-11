@@ -128,23 +128,6 @@ int main(){
 						switch_count++;
 					}
 				}
-				/*
-				switch(switch_count){
-					case 2 :	// 2개 스위치가 동시에 눌린 경우
-						flag_2_switch = true;
-						break;
-					default :
-						break;
-				}
-				*/
-				/* //print switches
-				if(switch_count>0){
-					for(i=0;i<MAX_BUTTON;i++){
-						printf("[%d] ",push_sw_buff[i]);
-					}
-					printf("switch_count = %d\n",switch_count);
-				}*/
-
 		// 3. check mode_key
 				switch(mode_key){
 					case BACK :	// exit program
@@ -256,22 +239,6 @@ int main(){
 			while(1){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_output);
-					/*
-					printf("OUTPUT PROCESS : %s\n\n\n", shmaddr);
-					*/
-					/*
-					switch(shmaddr[1]){
-						case BACK : // exit program
-							shmdt(shmaddr);	// detach shm
-							break;
-						case VOL_PLUS : // change mode + OR
-						case VOL_MINUS : // change mode -
-							
-							break;
-						default : 	// other key - do nothing
-							break;
-					}//end of switch
-					*/
 					switch(shmaddr[0]){
 						case 1 : // clock mode
 							printf("change mode to 1 : clock\n");
@@ -298,7 +265,7 @@ int main(){
 						default :
 							printf("Error on calculating mode number\n");
 							break;
-					}
+					}// END OF SWITCH
 					printf("output - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 
 			// clear shared memory
