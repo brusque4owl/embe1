@@ -33,6 +33,8 @@
 #define MODE4 4
 
 #define FND_DEVICE "/dev/fpga_fnd"
+#define KEY_DEVICE "/dev/input/event0"
+#define SWITCH_DEVICE "/dev/fpag_push_switch"
 #define MAX_BUTTON 9	// for switch
 
 int main(){
@@ -42,21 +44,29 @@ int main(){
 	int i;
 
 // prepare read_key, read_switch
-	int fd_key, fd_switch, mode_key;//mode key : 모드받는변수
+	int mode_key;//mode key : 모드받는변수
 	int switch_count = 0;	// 몇개 눌렸는지 체크
 	int buff_size;
 	struct input_event ev[BUFF_SIZE];
 	int rd, value,size=sizeof(struct input_event);// for readkey
 
-	char *key_dev = "/dev/input/event0";
-	char *switch_dev = "/dev/fpga_push_switch";
 
 	unsigned char push_sw_buff[MAX_BUTTON];
-	//bool flag_2_switch = false;	// 스위치 2개가 동시에 눌렸는지 확인
 	int pushed_switch[2];		// 몇번 스위치가 눌렸는지 기억
 
-// prepare FND_DEVICE open
-	int fd_fnd;
+// prepare DEVICES open
+	int fd_key, fd_switch, fd_fnd, fd_led;
+// open key device, switch device
+	if((fd_key = open(KEY_DEVICE, O_RDONLY|O_NONBLOCK))==-1){
+		printf("%s is not a valid device\n", KEY_DEVICE);
+	}
+
+	fd_switch = open(SWITCH_DEVICE, O_RDWR);
+	if(fd_switch<0){
+		printf("Device Open Error\n");
+		close(fd_key);
+		return -1;
+	}
 // Open FND_DEVICE
 	fd_fnd = open(FND_DEVICE, O_RDWR);
 	if(fd_fnd<0){
@@ -65,18 +75,6 @@ int main(){
 	}
 
 
-
-// open key device, switch device
-	if((fd_key = open(key_dev, O_RDONLY|O_NONBLOCK))==-1){
-		printf("%s is not a valid device\n", key_dev);
-	}
-
-	fd_switch = open(switch_dev, O_RDWR);
-	if(fd_switch<0){
-		printf("Device Open Error\n");
-		close(fd_key);
-		return -1;
-	}
 
 // prepare semaphore
 	int sem_input,sem_main,sem_output;
