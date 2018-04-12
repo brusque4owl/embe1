@@ -5,9 +5,11 @@ TARGET	= main
 
 all : $(TARGET)
 
-$(TARGET) : mode2.o mode1.o sema.o main.o
-	$(CC) $(CFLAGS) -static -o $(TARGET) mode2.o mode1.o sema.o main.o
+$(TARGET) : mode3.o mode2.o mode1.o sema.o main.o
+	$(CC) $(CFLAGS) -static -o $(TARGET) mode3.o mode2.o mode1.o sema.o main.o
 
+mode3.o : mode3.c
+	$(CC) $(CFLAGS) -static -c -o mode3.o mode3.c
 mode2.o : mode2.c
 	$(CC) $(CFLAGS) -static -c -o mode2.o mode2.c
 mode1.o : mode1.c

@@ -23,6 +23,7 @@
 #include "sema.h"
 #include "mode1.h"
 #include "mode2.h"
+#include "mode3.h"
 
 #define SHM_SIZE 1024
 #define BUFF_SIZE 64
@@ -241,6 +242,7 @@ int main(){
 							mode2(shmaddr);
 							break;
 						case MODE3 :
+							mode3(shmaddr);
 							break;
 						case MODE4 :
 							break;
