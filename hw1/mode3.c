@@ -41,7 +41,7 @@
 
 */
 
-__inline void update_shm_mode3(char *shmaddr, char *string, char input){
+__inline void update_shm_mode3(char *shmaddr, char *string, char input, bool flag){
 	int i;
 	shmaddr[0]=3;	// mode 3
 	int len = (int)strlen(string);
@@ -70,6 +70,9 @@ __inline void update_shm_mode3(char *shmaddr, char *string, char input){
 		string[i]='\0';
 	}
 
+	if(flag==false) shmaddr[35]=0;	// ENG
+	else			shmaddr[35]=1;  // NUM
+
 	printf("업데이트 전 : %d\n",len);
 	printf("스트링 길이 : %d\n",(int)strlen(string));
 	printf("    i value : %d\n", i);
@@ -87,14 +90,16 @@ int mode3(char *shmaddr){
 	static int enter_mode3=0;
 	static char input=0; // 모드3오면 input을 NUL로 초기화/ 이후 변경내역 기역
 	static char string[MAX_BUFF+1];
+	static bool eng_num_flag=false;	// false : english | true : number
 	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
-		enter_mode3=0;	// 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열) 
+		enter_mode3=0;	// 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열, 영수 플래그, 도트 매트릭스)
 		input=0;
 		memset(string,0,sizeof(string));
+		eng_num_flag=false;
+		shmaddr[35]=0;	// 도트 매트리스에 사용할 플래그(0->eng / 1->num)
 	}
 	int i;
 
-	static bool eng_num_flag=false;	// false : english | true : number
 
 //1. 버튼 2개 동시에 눌리는 상황 처리(A. SW2&SW3 : LCD clear / B. SW5&SW6 : change writing mode / C. SW8&SW9 : make a space)
 
@@ -105,24 +110,26 @@ int mode3(char *shmaddr){
 			memset(string,0,sizeof(string));
 			input=0;
 		}
+		update_shm_mode3(shmaddr, string, 0, eng_num_flag);
 		return 0;
 	}
 	// ENGLISH <-> NUMBER 작동 확인 필요
 	else if(shmaddr[2]==SW5 && shmaddr[3]==SW6){
 		eng_num_flag=!eng_num_flag;	// flag 뒤집기
 		input=0;// input은 청소해야함.
-		update_shm_mode3(shmaddr, string, 0); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
+		update_shm_mode3(shmaddr, string, 0, eng_num_flag); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
 		return 0;
 	}
 	// MAKE A SPACE 작동 확인
 	else if(shmaddr[2]==SW8 && shmaddr[3]==SW9){
 		input = ' '; // 공백==32
-		update_shm_mode3(shmaddr, string, input);
+		update_shm_mode3(shmaddr, string, input, eng_num_flag);
 		return 0;
 	}
 // 버튼 2개 눌리는 상황은 모두 아래까지 안내려오도록하고 리턴시켰음
 //2. 글자 처리 -  하나의 스위치만 누른 경우	
-
+//영어 쓰기
+if(eng_num_flag==false){ 
 	if(shmaddr[2]==NO_SWITCH){	// 아무것도 안누른 경우
 		//모드 최초 진입시 string과 LCD 클리어하고 리턴
 		// 모드에 반복 진입시 기존 정보로 shm을 update
@@ -156,38 +163,48 @@ int mode3(char *shmaddr){
 	else if(shmaddr[2]==SW9){
 		input = 'W';
 	}
-	update_shm_mode3(shmaddr,string,input);
+}// 영어 쓰기
+else{//숫자 쓰기
+	switch(shmaddr[2]){
+		case SW1 :
+			input = '1';
+			break;
+		case SW2 :
+			input = '2';
+			break;
+		case SW3 :
+			input = '3';
+			break;
+		case SW4 :
+			input = '4';
+			break;
+		case SW5 :
+			input = '5';
+			break;
+		case SW6 :
+			input = '6';
+			break;
+		case SW7 :
+			input = '7';
+			break;
+		case SW8 :
+			input = '8';
+			break;
+		case SW9 :
+			input = '9';
+			break;
+		default : // NO_SWITCH
+			input = 0;
+			break;
+	}// end of switch(shmaddr[2]) of 숫자 쓰기
+}
+
+	update_shm_mode3(shmaddr,string,input,eng_num_flag);
 	enter_mode3++;
 	printf("@@@@@enter_mode3 = %d\n",enter_mode3);
 	return 0;
 }//END OF mode3()
 /*
-	//1. 버튼 2개 동시에 눌리는 상황 처리(A. SW2&SW3 : LCD clear / B. SW5&SW6 : change writing mode / C. SW8&SW9 : make a space)
-	if(shmaddr[2]==SW2 && shmaddr[3]==SW3){
-		// LCD CLEAR
-		for(i=1;i<=MAX_BUFF;i++)
-			shmaddr[i]=32;// ' ' 공백 아스키 코드==32
-		return 0;
-	}
-	else if(shmaddr[2]==SW5 && shmaddr[3]==SW6){
-		// ENGLISH <-> NUMBER
-		eng_num_flag=!eng_num_flag;	// flag 뒤집기
-		// eng, num 모드 변경시 누른 스위치와 스위치 누른 횟수를 초기화해줌
-		pushed_switch = '0';
-		switch_counter = 0;
-		input = 0;// update시 input==0은 별도 처리
-		update_shm_mode3(shmaddr, string, input); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
-		return 0;
-	}
-	else if(shmaddr[2]==SW8 && shmaddr[3]==SW9){
-		// MAKE A SPACE
-		pushed_switch = '0';
-		switch_counter = 0;
-		input = 32; // 공백==32
-		update_shm_mode3(shmaddr, string, input);
-		return 0;
-	}
-
 //2. 글자 처리
 	else{	// 하나의 스위치만 누른 경우	
 		if(eng_num_flag==false){	// 영어 입력

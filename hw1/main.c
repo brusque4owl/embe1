@@ -24,6 +24,7 @@
 #include "mode1.h"
 #include "mode2.h"
 #include "mode3.h"
+#include "dot_font.h"
 
 #define SHM_SIZE 1024
 #define BUFF_SIZE 64
@@ -42,6 +43,7 @@
 #define FPGA_BASE_ADDRESS 0x08000000 //fpga_base address
 #define LED_ADDR 0x16
 #define LCD_DEVICE "/dev/fpga_text_lcd"
+#define DOT_DEVICE "/dev/fpga_dot"
 
 #define MAX_BUTTON 9	// for switch
 #define MAX_BUFF 32
@@ -70,7 +72,7 @@ int main(){
 	int pushed_switch[2];		// 몇번 스위치가 눌렸는지 기억
 
 // prepare DEVICES open
-	int fd_key, fd_switch, fd_fnd, fd_led, fd_lcd;
+	int fd_key, fd_switch, fd_fnd, fd_led, fd_lcd, fd_dot;
 // open key device, switch device
 	if((fd_key = open(KEY_DEVICE, O_RDONLY|O_NONBLOCK))==-1){
 		printf("%s is not a valid device\n", KEY_DEVICE);
@@ -109,6 +111,13 @@ int main(){
 	fd_lcd = open(LCD_DEVICE, O_WRONLY);
 	if(fd_lcd<0){
 		printf("Device open error : %s\n", LCD_DEVICE);
+		return -1;
+	}
+
+// open DOT_DEVICE
+	fd_dot = open(DOT_DEVICE, O_WRONLY);
+	if(fd_dot<0){
+		printf("Device open error : %s\n", DOT_DEVICE);
 		return -1;
 	}
 
@@ -358,6 +367,7 @@ int main(){
 									break;
 							}
 							break;
+// TEXT EDITOR MODE : WRITE to FND_DEVICE, LCD_DEVICE and DOT_DEVICE
 						case 3 : // text editor mode
 							printf("change mode to 3 : text editor\n");
 							//buffer를 이용하여 shmaddr[0]에 적힌 모드부분 제거
@@ -374,17 +384,20 @@ int main(){
 							str_size = strlen(buf);
 							memset(buf+str_size,' ',MAX_BUFF-str_size);
 							write(fd_lcd, &buf, MAX_BUFF);
+							// DOT_DEVICE 작성
+							if(shmaddr[35]==0){	str_size = sizeof(english); write(fd_dot,english,str_size); }
+							else			  { str_size = sizeof(number);  write(fd_dot,number ,str_size); }
+
 							break;
 						case 4 : // draw board mode
+				// shmaddr 변경한게 반영 안되는 문제 발생시 아래쪽 clear shared memory 확인
 							printf("change mode to 4 : draw board\n");
 							break;
 						default :
 							printf("Error on calculating mode number\n");
 							break;
 					}// END OF SWITCH
-					//printf("output - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
 					//printf("output - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
-					//printf("shmaddr[6] = %d\n",shmaddr[6]);
 
 			
 			// clear shared memory
