@@ -252,7 +252,7 @@ int main(){
 							mode2(shmaddr);
 							break;
 						case MODE3 :
-							delay(5);
+							delay(2);
 							mode3(shmaddr);
 							break;
 						case MODE4 :
@@ -367,7 +367,7 @@ int main(){
 							printf("OUTPUT - strlen(shmaddr) = %d\n",len);
 							for(i=0;i<len;i++){
 								buf[i] = shmaddr[i+1];
-								printf("%c",buf[i]); 	// 문제 발생지점
+								printf("%c",buf[i]); 	// 문제 해결- MAIN PROCESS에서 mode1 최초진입 아닐때 shmaddr[5]='\0'했길래 수정
 							}
 							printf("\n");
 							//buf[len] = '\0';

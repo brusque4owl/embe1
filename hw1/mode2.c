@@ -107,9 +107,12 @@ __inline void update_shm_mode2(char *shmaddr, int num, int base){
 
 int mode2(char *shmaddr){
 	static int num;		// 업데이트된 넘버를 기억 / 초기값은 0000
-	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS) num=0;
-	static int base_mode=BASE10;	// 진수를 기억 / 초기값은 10진수
 	int base;
+	static int base_mode=BASE10;	// 진수를 기억 / 초기값은 10진수
+	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
+		num=0;
+		base_mode=BASE10; // 모드 진입 시 항상 10진수로 시작
+	}
 	switch(base_mode){
 		case BASE10 :
 			base = 10;
