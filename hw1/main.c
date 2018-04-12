@@ -41,7 +41,10 @@
 #define SWITCH_DEVICE "/dev/fpga_push_switch"
 #define FPGA_BASE_ADDRESS 0x08000000 //fpga_base address
 #define LED_ADDR 0x16
+#define LCD_DEVICE "/dev/fpga_text_lcd"
+
 #define MAX_BUTTON 9	// for switch
+#define MAX_BUFF 32
 
 #define CLOCK_PER_SEC 100000	// CLOCKS_PER_SEC in <time.h> is 1000000
 __inline void delay(clock_t second){
@@ -67,7 +70,7 @@ int main(){
 	int pushed_switch[2];		// 몇번 스위치가 눌렸는지 기억
 
 // prepare DEVICES open
-	int fd_key, fd_switch, fd_fnd, fd_led;
+	int fd_key, fd_switch, fd_fnd, fd_led, fd_lcd;
 // open key device, switch device
 	if((fd_key = open(KEY_DEVICE, O_RDONLY|O_NONBLOCK))==-1){
 		printf("%s is not a valid device\n", KEY_DEVICE);
@@ -102,6 +105,12 @@ int main(){
 	// led data레지스터의 주소값 0x08000016
 	led_addr=(unsigned char*)((void*)fpga_addr+LED_ADDR);
 
+// Open LCD_DEVICE
+	fd_lcd = open(LCD_DEVICE, O_WRONLY);
+	if(fd_lcd<0){
+		printf("Device open error : %s\n", LCD_DEVICE);
+		return -1;
+	}
 
 // prepare semaphore
 	int sem_input,sem_main,sem_output;
@@ -206,7 +215,7 @@ int main(){
 			while(1){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				if(main_counter==0) shmaddr[5]=1;	// 모드1 최초진입시에만 사용
-				else				shmaddr[5]='\0';
+				//else				shmaddr[5]='\0';
 				semlock(sem_main);
 		// 1. check mode key is changed or not
 					switch(shmaddr[1]){	// read mode_key
@@ -217,6 +226,7 @@ int main(){
 							close(fd_switch);
 							close(fd_fnd);
 							close(fd_led);
+							close(fd_lcd);
 							return 0;
 							break;
 						case VOL_PLUS : // add mode number
@@ -242,6 +252,7 @@ int main(){
 							mode2(shmaddr);
 							break;
 						case MODE3 :
+							delay(5);
 							mode3(shmaddr);
 							break;
 						case MODE4 :
@@ -251,8 +262,8 @@ int main(){
 							break;
 					}// end of switch(mode)
 					//printf("main - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
-					printf("main - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
-					printf("shmaddr[6] = %d\n", shmaddr[6]);
+					//printf("main - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					//printf("shmaddr[6] = %d\n", shmaddr[6]);
 				semunlock(sem_output);
 				main_counter++;
 			}
@@ -261,6 +272,7 @@ int main(){
 // OUTPUT PROCESS - child 2 ----------------------------------------------------------------------------------------------------
 		else{	
 			int retval;	// check for write
+			int str_size;
 			while(1){
 				shmaddr = (char *)shmat(shmid, NULL, 0);	// 0 = read/write
 				semlock(sem_output);
@@ -348,6 +360,20 @@ int main(){
 							break;
 						case 3 : // text editor mode
 							printf("change mode to 3 : text editor\n");
+							//buffer를 이용하여 shmaddr[0]에 적힌 모드부분 제거
+							for(i=0;i<=MAX_BUFF;i++) //buffer 청소
+								buf[i]=0;
+							int len = strlen(shmaddr);
+							printf("OUTPUT - strlen(shmaddr) = %d\n",len);
+							for(i=0;i<len;i++){
+								buf[i] = shmaddr[i+1];
+								printf("%c",buf[i]); 	// 문제 발생지점
+							}
+							printf("\n");
+							//buf[len] = '\0';
+							str_size = strlen(buf);
+							memset(buf+str_size,' ',MAX_BUFF-str_size);
+							write(fd_lcd, &buf, MAX_BUFF);
 							break;
 						case 4 : // draw board mode
 							printf("change mode to 4 : draw board\n");
@@ -357,8 +383,8 @@ int main(){
 							break;
 					}// END OF SWITCH
 					//printf("output - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
-					printf("output - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
-					printf("shmaddr[6] = %d\n",shmaddr[6]);
+					//printf("output - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					//printf("shmaddr[6] = %d\n",shmaddr[6]);
 
 			
 			// clear shared memory

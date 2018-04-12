@@ -4,38 +4,56 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-BACK	main.c	29;"	d	file:
+BACK	main.c	30;"	d	file:
 BASE10	mode2.c	21;"	d	file:
 BASE2	mode2.c	24;"	d	file:
 BASE4	mode2.c	23;"	d	file:
 BASE8	mode2.c	22;"	d	file:
-BUFF_SIZE	main.c	28;"	d	file:
+BUFF_SIZE	main.c	29;"	d	file:
 CC	Makefile	/^CC		= arm-none-linux-gnueabi-gcc$/;"	m
 CFLAGS	Makefile	/^CFLAGS	= -W -Wall$/;"	m
-FND_DEVICE	main.c	38;"	d	file:
-FPGA_BASE_ADDRESS	main.c	41;"	d	file:
-KEY_DEVICE	main.c	39;"	d	file:
-LED_ADDR	main.c	42;"	d	file:
-MAX_BUTTON	main.c	44;"	d	file:
-MODE1	main.c	33;"	d	file:
-MODE2	main.c	34;"	d	file:
-MODE3	main.c	35;"	d	file:
-MODE4	main.c	36;"	d	file:
-SHM_SIZE	main.c	27;"	d	file:
+CLOCK_PER_SEC	main.c	49;"	d	file:
+FND_DEVICE	main.c	39;"	d	file:
+FPGA_BASE_ADDRESS	main.c	42;"	d	file:
+KEY_DEVICE	main.c	40;"	d	file:
+LCD_DEVICE	main.c	44;"	d	file:
+LED_ADDR	main.c	43;"	d	file:
+MAX_BUFF	main.c	47;"	d	file:
+MAX_BUFF	mode3.c	32;"	d	file:
+MAX_BUTTON	main.c	46;"	d	file:
+MODE1	main.c	34;"	d	file:
+MODE2	main.c	35;"	d	file:
+MODE3	main.c	36;"	d	file:
+MODE4	main.c	37;"	d	file:
+NO_SWITCH	mode3.c	18;"	d	file:
+SHM_SIZE	main.c	28;"	d	file:
 SW1	mode1.c	17;"	d	file:
 SW1	mode2.c	17;"	d	file:
+SW1	mode3.c	19;"	d	file:
 SW2	mode1.c	18;"	d	file:
 SW2	mode2.c	18;"	d	file:
+SW2	mode3.c	20;"	d	file:
 SW3	mode1.c	19;"	d	file:
 SW3	mode2.c	19;"	d	file:
+SW3	mode3.c	21;"	d	file:
 SW4	mode1.c	20;"	d	file:
 SW4	mode2.c	20;"	d	file:
-SWITCH_DEVICE	main.c	40;"	d	file:
+SW4	mode3.c	22;"	d	file:
+SW5	mode3.c	23;"	d	file:
+SW6	mode3.c	24;"	d	file:
+SW7	mode3.c	25;"	d	file:
+SW8	mode3.c	26;"	d	file:
+SW9	mode3.c	27;"	d	file:
+SWITCH_DEVICE	main.c	41;"	d	file:
 TARGET	Makefile	/^TARGET	= main$/;"	m
-VOL_MINUS	main.c	31;"	d	file:
+VOL_MINUS	main.c	32;"	d	file:
 VOL_MINUS	mode1.c	23;"	d	file:
-VOL_PLUS	main.c	30;"	d	file:
+VOL_MINUS	mode2.c	27;"	d	file:
+VOL_MINUS	mode3.c	30;"	d	file:
+VOL_PLUS	main.c	31;"	d	file:
 VOL_PLUS	mode1.c	22;"	d	file:
+VOL_PLUS	mode2.c	26;"	d	file:
+VOL_PLUS	mode3.c	29;"	d	file:
 array	sema.h	/^	unsigned short *array;$/;"	m	union:semun
 buf	sema.h	/^	struct semid_ds *buf;$/;"	m	union:semun	typeref:struct:semun::semid_ds
 delay	main.c	/^__inline void delay(clock_t second){$/;"	f
@@ -43,9 +61,11 @@ initsem	sema.c	/^int initsem(key_t semkey, int val){$/;"	f
 main	main.c	/^int main(){$/;"	f
 mode1	mode1.c	/^int mode1(char *shmaddr){$/;"	f
 mode2	mode2.c	/^int mode2(char *shmaddr){$/;"	f
+mode3	mode3.c	/^int mode3(char *shmaddr){$/;"	f
 semlock	sema.c	/^int semlock(int semid){$/;"	f
 semun	sema.h	/^union semun{$/;"	u
 semunlock	sema.c	/^int semunlock(int semid){$/;"	f
 update_shm_mode1	mode1.c	/^__inline void update_shm_mode1(char *shmaddr, int hour, int minute, bool flag){$/;"	f
 update_shm_mode2	mode2.c	/^__inline void update_shm_mode2(char *shmaddr, int num, int base){$/;"	f
+update_shm_mode3	mode3.c	/^__inline void update_shm_mode3(char *shmaddr, char *string, char input){$/;"	f
 val	sema.h	/^	int val;$/;"	m	union:semun

@@ -15,6 +15,7 @@
 
 #include "mode3.h"
 
+#define NO_SWITCH 0
 #define SW1 1
 #define SW2 2
 #define SW3 3
@@ -38,81 +39,355 @@
 -----------------------------
  [0]  [1~32]
 
-string과 shmaddr의 관계
-   <string>           <shmaddr>
- 1. m
- --------------    --------------
- |m           | -> |           m|
- --------------    --------------
- 2. mg
- -------------    --------------
- |mg          | -> |          mg|
- --------------    --------------
- 3. mgo
- --------------    --------------
- |mgo         | -> |         mgo|
- --------------    --------------
-   <string>           <shmaddr>
 */
 
-__inline void update_shm_mode3(char *shmaddr, char *string){
-	// string내용은 index 0~31까지 작성되어 있음?
-	// shmaddr에는 index 33부터 거꾸로 작성해줘야함. 빈 공간은 ' '로 공백처리 필요.
+__inline void update_shm_mode3(char *shmaddr, char *string, char input){
 	int i;
+	shmaddr[0]=3;	// mode 3
 	int len = (int)strlen(string);
-	int start = MAX_BUFF-len+1;	// 32는 shmaddr[32]를 의미, len은 string길이, 시작점으로 위치조정을  위해 1을 더해줌
-	for(i=0;i<len;i++){
-		// string은 index 0부터 저장되고, shmaddr에는 index 32에 끝 글자가 저장된다.(상단주석참고)
-		shmaddr[start+i]=string[i];
-	}
-	// 빈공간 처리('32-문자열길이'만큼 공백 처리)
-	if(len<MAX_BUFF){
-		for(i=start-1;i>=1;i--){
-			shmaddr[i]=' ';
+	if(len>=32){
+		if(input==0){ 	// 길이 32부터는 대기상태에서 널스트링 오는거 처리X
+			for(i=0;i<=len;i++){
+				shmaddr[i+1]=string[i];
+			}
+			return;
 		}
+		for(i=0;i<len-1;i++){// shmaddr과 string 모두 업데이트
+			string[i]=string[i+1]; // 한칸씩 앞으로 이동
+			shmaddr[i+1]=string[i+1];
+		}
+		string[i]=input;	// i=31인 상황
+		shmaddr[i+1]=input;
 	}
+	else{
+		//1. shm에 string 작성
+		for(i=1;i<=len;i++)
+			shmaddr[i]=string[i-1];
+		//2. shm에 input 작성
+		shmaddr[i]=input;
+		//3. string 업데이트
+		string[i-1]=input;
+		string[i]='\0';
+	}
+
+	printf("업데이트 전 : %d\n",len);
+	printf("스트링 길이 : %d\n",(int)strlen(string));
+	printf("    i value : %d\n", i);
+	printf("shm    길이 : %d\n",(int)strlen(shmaddr));	// shmaddr[0]=3이 있어서, 스트링 없어도 길이가 1이됨.
+	for(i=0;i<(int)strlen(string);i++)
+		printf("%c",string[i]);
+	printf("\n");
+	for(i=0;i<(int)strlen(shmaddr);i++)
+		printf("%c",shmaddr[i]);
+	printf("\n");
 }
 
+
 int mode3(char *shmaddr){
+	static int enter_mode3=0;
+	static char input=0; // 모드3오면 input을 NUL로 초기화/ 이후 변경내역 기역
+	static char string[MAX_BUFF+1];
+	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
+		enter_mode3=0;	// 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열) 
+		input=0;
+		memset(string,0,sizeof(string));
+	}
 	int i;
-	char input;	// input character
-	// [0]~[32] 총 33글자 받고, [33]='\0'
-	static char string[MAX_BUFF+2]={'\0',};	
+
 	static bool eng_num_flag=false;	// false : english | true : number
 
+// 아무것도 안누른 경우 - 1. 모드 최초 진입 시(최초상태세팅) / 2. 그 후(기존 상태 유지) - 최초 진입 이후 아무거도 안한상태도 여기
+	if(shmaddr[2]==NO_SWITCH){	// 아무것도 안누른 경우
+		//모드 최초 진입시 string과 LCD 클리어하고 리턴
+		// 모드에 반복 진입시 기존 정보로 shm을 update
+		// 아래 한줄로 처리
+		update_shm_mode3(shmaddr,string,0);	// 0 = NUL in ASCII CODE(NULL string)
+	}
+	else if(shmaddr[2]==SW1){
+		input = 'A';
+		update_shm_mode3(shmaddr,string,input);
+	}
+	else if(shmaddr[2]==SW2){
+		input = 'B';
+		update_shm_mode3(shmaddr,string,input);
+	}
+	enter_mode3++;
+	printf("@@@@@enter_mode3 = %d\n",enter_mode3);
+	return 0;
+}//END OF mode3()
+/*
 	//1. 버튼 2개 동시에 눌리는 상황 처리(A. SW2&SW3 : LCD clear / B. SW5&SW6 : change writing mode / C. SW8&SW9 : make a space)
 	if(shmaddr[2]==SW2 && shmaddr[3]==SW3){
 		// LCD CLEAR
 		for(i=1;i<=MAX_BUFF;i++)
-			shmaddr[i]=' ';
+			shmaddr[i]=32;// ' ' 공백 아스키 코드==32
 		return 0;
 	}
 	else if(shmaddr[2]==SW5 && shmaddr[3]==SW6){
 		// ENGLISH <-> NUMBER
 		eng_num_flag=!eng_num_flag;	// flag 뒤집기
+		// eng, num 모드 변경시 누른 스위치와 스위치 누른 횟수를 초기화해줌
+		pushed_switch = '0';
+		switch_counter = 0;
+		input = 0;// update시 input==0은 별도 처리
+		update_shm_mode3(shmaddr, string, input); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
+		return 0;
 	}
 	else if(shmaddr[2]==SW8 && shmaddr[3]==SW9){
 		// MAKE A SPACE
-	}
-	else{	// 하나의 스위치만 누른 경우	
+		pushed_switch = '0';
+		switch_counter = 0;
+		input = 32; // 공백==32
+		update_shm_mode3(shmaddr, string, input);
+		return 0;
 	}
 
-	//2. 글자 처리
-	// 만약 글자하나 받았는데 33글자가 되면, 가장 오래된 맨 처음글자 삭제하고, 한칸씩 당긴 뒤 strcat 수행
-	if(eng_num_flag==false){	// 영어 입력
-	}
-	else{						// 숫자 입력
-	}
-	strcat(string,&input);
-	if((int)strlen(string)>32){
-		for(i=0;i<=MAX_BUFF;i++){
-			string[i]=string[i+1];//한칸씩 당기기(0~31:글자, 32:널문자| 33은 상관없음)
-		}
-		//string[33]='\0';
-	}
-	
-	printf("strcat 결과 : %s\n",string);
+//2. 글자 처리
+	else{	// 하나의 스위치만 누른 경우	
+		if(eng_num_flag==false){	// 영어 입력
+			printf("-------영어 입력중----------\n");
+// 누른 키를 다시 누르는 경우
+			if(shmaddr[2]==pushed_switch){	// 눌렀던거 또 누르는 경우
+				switch_counter++;
+				if(switch_counter>3) switch_counter=1;	// 4번째 누르는 경우 처음 누른 것으로 판단
+				switch(pushed_switch){
+					case SW1 : 
+						switch(switch_counter){
+							case 1 :
+								input = '.';
+								break;
+							case 2 :
+								input = 'Q';
+								break;
+							case 3 :
+								input = 'Z';
+								break;
+						}
+						break;
+					case SW2 : 
+						switch(switch_counter){
+							case 1 :
+								input = 'A';
+								break;
+							case 2 :
+								input = 'B';
+								break;
+							case 3 :
+								input = 'C';
+								break;
+						}
+						break;
+					case SW3 : 
+						switch(switch_counter){
+							case 1 :
+								input = 'D';
+								break;
+							case 2 :
+								input = 'E';
+								break;
+							case 3 :
+								input = 'F';
+								break;
+						}
+						break;
+					case SW4 : 
+						switch(switch_counter){
+							case 1 :
+								input = 'G';
+								break;
+							case 2 :
+								input = 'H';
+								break;
+							case 3 :
+								input = 'I';
+								break;
+						}
+						break;
+					case SW5 : 
+						switch(switch_counter){
+							case 1 :
+								input = 'J';
+								break;
+							case 2 :
+								input = 'K';
+								break;
+							case 3 :
+								input = 'L';
+								break;
+						}
+						break;
+					case SW6 : 
+						switch(switch_counter){
+							case 1 :
+								input = 'M';
+								break;
+							case 2 :
+								input = 'N';
+								break;
+							case 3 :
+								input = 'O';
+								break;
+						}
+						break;
+					case SW7 : 
+						switch(switch_counter){
+							case 1 :
+								input = 'P';
+								break;
+							case 2 :
+								input = 'R';
+								break;
+							case 3 :
+								input = 'S';
+								break;
+						}
+						break;
+					case SW8 : 
+						switch(switch_counter){
+							case 1 :
+								input = 'T';
+								break;
+							case 2 :
+								input = 'U';
+								break;
+							case 3 :
+								input = 'V';
+								break;
+						}
+						break;
+					case SW9 : 
+						switch(switch_counter){
+							case 1 :
+								input = 'W';
+								break;
+							case 2 :
+								input = 'X';
+								break;
+							case 3 :
+								input = 'Y';
+								break;
+						}
+						break;
+					default : 	// NO_SWITCH -> 아무것도 안바꾸고 업데이트.
+						input = 0;
+						break;
+				}//END OF SWITCH
+				previous_input = input;
+			}// if문 끝 : 눌렀던거 또 누르는 경우
+			else{	// 새로운 스위치가 눌림
+				new_char = true;
+				if(pushed_switch=='0'){	// 눌린 스위치 초기화하는 경우 - 공백넣기, 숫자영어모드 바꾸기 // 모드진입후최초입력
+					// 최초입력
+					if(first_input==false){
+						first_input=true;
+						switch(shmaddr[2]){
+							case SW1 :
+								input = '.';
+								break;
+							case SW2 :
+								input = 'A';
+								break;
+							case SW3 :
+								input = 'D';
+								break;
+							case SW4 :
+								input = 'G';
+								break;
+							case SW5 :
+								input = 'J';
+								break;
+							case SW6 :
+								input = 'M';
+								break;
+							case SW7 :
+								input = 'P';
+								break;
+							case SW8 :
+								input = 'T';
+								break;
+							case SW9 :
+								input = 'W';
+								break;
+						}
+						switch_counter = 1;
+					}
+					// 공백, 숫자영어 변경하고 여기로 들어오는 경우
+					else{
+						switch_counter = 0;
+					}
+				}
+				else{	// 새로운 스위치 처리
+					pushed_switch = shmaddr[2];
+					switch_counter = 1;
+				}
+			}// else문 끝 : 새로운 스위치 누르는 경우
+
+			if(new_char == false){	// 같은 스위치를 계속 누르는 경우
+				;	// 따로 할일은 없음. update_shm_mode3에 기존 string과 바뀐input만 넘김
+			}
+			else{					// 이전과 다른 스위치가 눌린 경우
+				strcat(string,&previous_input);	// 이전 글자를 string에 합치고 새로운 input을 넘김
+				new_char = false;	// 다시 플래그 초기화
+			}
+		}// if문 끝 : 영어 입력
+
+		else{						// 숫자 입력
+			printf("-------숫자 입력중----------\n");
+			switch(pushed_switch){
+				case SW1 : 
+					input = '1';
+					break;
+				case SW2 : 
+					input = '2';
+					break;
+				case SW3 : 
+					input = '3';
+					break;
+				case SW4 : 
+					input = '4';
+					break;
+				case SW5 : 
+					input = '5';
+					break;
+				case SW6 : 
+					input = '6';
+					break;
+				case SW7 : 
+					input = '7';
+					break;
+				case SW8 : 
+					input = '8';
+					break;
+				case SW9 : 
+					input = '9';
+					break;
+				default :	// NO_SWITCH. 저장된 값들로 shm을 update
+					input = 0;
+					break;
+			}// end of switch
+		}// else문 끝 : 숫자 입력
+
+	}// END OF else문 : 하나의 스위치만 누른 경우
+
+	//update전
+	printf("update전 shmaddr\n");
+	for(i=0;i<=MAX_BUFF;i++)
+		printf("%d ",shmaddr[i]);
+	printf("\n");
+	printf("update전 string : %s\n", string);
+	printf("update전 input  : %d\n\n", input);
+
 	//3. 마지막에 update_shm_mode3()수행
-	update_shm_mode3(shmaddr, string);
+	update_shm_mode3(shmaddr, string, input);
+	// update 후
+	printf("update후 shmaddr\n");
+	for(i=0;i<=MAX_BUFF;i++)
+		printf("%d ",shmaddr[i]);
+	printf("\n");
+	printf("update후 string : %s\n", string);
+	printf("update후 input  : %d\n\n", input);
+
+	enter_mode3++;// mode3다녀감
 	return 0;
 }
+*/
