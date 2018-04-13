@@ -339,6 +339,7 @@ int main(){
 // COUNTER MODE : WRITE to FND_DEVICE and LED_DEVICE
 						case 2 : // counter mode
 							printf("change mode to 2 : counter\n");
+						// FND_DEVICE
 							for(i=1;i<5;i++){
 								buf[i-1]=shmaddr[i];}
 							buf[i]='\0';
@@ -348,7 +349,7 @@ int main(){
 								printf("Write Error!\n");
 								return -1;
 							}
-							// led below
+						// LED_DEVICE
 							switch(shmaddr[6]){
 								case 10 :
 									*led_addr = 64;	// 10진수 = 2번 LED
@@ -370,6 +371,7 @@ int main(){
 // TEXT EDITOR MODE : WRITE to FND_DEVICE, LCD_DEVICE and DOT_DEVICE
 						case 3 : // text editor mode
 							printf("change mode to 3 : text editor\n");
+					// LCD_DEVICE 작성
 							//buffer를 이용하여 shmaddr[0]에 적힌 모드부분 제거
 							for(i=0;i<=MAX_BUFF;i++) //buffer 청소
 								buf[i]=0;
@@ -384,11 +386,20 @@ int main(){
 							str_size = strlen(buf);
 							memset(buf+str_size,' ',MAX_BUFF-str_size);
 							write(fd_lcd, &buf, MAX_BUFF);
-							// DOT_DEVICE 작성
+					// DOT_DEVICE 작성
 							if(shmaddr[35]==0){	str_size = sizeof(english); write(fd_dot,english,str_size); }
 							else			  { str_size = sizeof(number);  write(fd_dot,number ,str_size); }
-
+					// FND_DEVICE 작성
+							for(i=36;i<40;i++){
+								buf[i-36]=shmaddr[i];}
+							buf[4]='\0';
+							retval = write(fd_fnd, &buf, 4);
+							if(retval<0){
+								printf("Write Error!\n");
+								return -1;
+							}
 							break;
+// DRAW BOARD MODE : WRITE to FND_DEVICE, DOT_DEVICE
 						case 4 : // draw board mode
 				// shmaddr 변경한게 반영 안되는 문제 발생시 아래쪽 clear shared memory 확인
 							printf("change mode to 4 : draw board\n");

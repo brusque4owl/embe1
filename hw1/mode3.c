@@ -34,10 +34,10 @@
 
 /* MAIN의 결과 shmaddr
 <옳은 양식>
------------------------------
-|mode|string~~~~~~~~~~~~~~~~|
------------------------------
- [0]  [1~32]
+----------------------------------------------
+|mode|string~~~~~~~~~~~~~~~~|E/N flag|counter|
+----------------------------------------------
+ [0]  [1~32]                  [35]    [36~39]
 
 */
 
@@ -101,9 +101,29 @@ __inline void update_shm_mode3(char *shmaddr, char *string, char input, bool fla
 	else			shmaddr[35]=1;  // NUM
 }
 */
-__inline void update_shm_mode3(char *shmaddr, char *string, char input, bool flag, int repeater){
+__inline void update_shm_mode3(char *shmaddr, char *string, char input, bool flag, int repeater, int counter){
 	int i;
 	int len = (int)strlen(string);
+	// FND 처리용 : shmaddr[36][37][38][39] 네자리
+	i=0;
+	if(counter>9999) counter=0; // 9999를 넘어가면 0으로 초기화
+	do{
+		shmaddr[39-i]=counter%10;
+		counter = counter/10;
+		i++;
+	}while(counter!=0);
+	//여기 도착하면 i는 counter의 자리수와 같아짐
+	switch(i){
+		case 1 :	// 3자리 남음
+			shmaddr[38]=0;
+		case 2 : 	// 2자리 남음
+			shmaddr[37]=0;
+		case 3 :	// 1자리 남음
+			shmaddr[36]=0;
+			break;
+		default :	// i==4이면 이미 자리수 모두 사용
+			break;
+	}
 
 	// DOT MATRIX 처리용
 	if(flag==false) shmaddr[35]=0;	// ENG
@@ -167,6 +187,7 @@ int mode3(char *shmaddr){
 	static int previous_sw=NO_SWITCH;
 	static int repeater = 0;
 	static int push_counter = 0;
+	if(push_counter==10000) push_counter=0;
 	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
 // 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열, 영수 플래그, 도트 매트릭스,이전 스위치,문자반복입력,푸시카운터)
 		enter_mode3=0;	
@@ -177,6 +198,7 @@ int mode3(char *shmaddr){
 		previous_sw = NO_SWITCH;
 		repeater = 0;
 		push_counter = 0;
+		//push_counter = 9990; // test code for 9999->0000
 	}
 	int i;
 
@@ -190,7 +212,7 @@ int mode3(char *shmaddr){
 			memset(string,0,sizeof(string));
 			input=0;
 		}
-		update_shm_mode3(shmaddr, string, 0, eng_num_flag,repeater);
+		update_shm_mode3(shmaddr, string, 0, eng_num_flag,repeater,push_counter);
 		previous_sw = NO_SWITCH;
 		repeater = 0;
 		return 0;
@@ -199,7 +221,7 @@ int mode3(char *shmaddr){
 	else if(shmaddr[2]==SW5 && shmaddr[3]==SW6){
 		eng_num_flag=!eng_num_flag;	// flag 뒤집기
 		input=0;// input은 청소해야함.
-		update_shm_mode3(shmaddr, string, 0, eng_num_flag,repeater); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
+		update_shm_mode3(shmaddr, string, 0, eng_num_flag,repeater,push_counter); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
 		previous_sw = NO_SWITCH;
 		repeater = 0;
 		return 0;
@@ -208,7 +230,7 @@ int mode3(char *shmaddr){
 	else if(shmaddr[2]==SW8 && shmaddr[3]==SW9){
 		input = ' '; // 공백==32
 		repeater = 1; // 공백도 처음 쓰는 것으로 판단
-		update_shm_mode3(shmaddr, string, input, eng_num_flag,repeater);
+		update_shm_mode3(shmaddr, string, input, eng_num_flag,repeater,push_counter);
 		previous_sw = NO_SWITCH;
 		push_counter++;	// 공백도 하나의 text 입력임
 		repeater = 0;
@@ -446,39 +468,47 @@ else{//숫자 쓰기
 	switch(shmaddr[2]){
 		case SW1 :
 			input = '1';
+			push_counter++;
 			break;
 		case SW2 :
 			input = '2';
+			push_counter++;
 			break;
 		case SW3 :
 			input = '3';
+			push_counter++;
 			break;
 		case SW4 :
 			input = '4';
+			push_counter++;
 			break;
 		case SW5 :
 			input = '5';
+			push_counter++;
 			break;
 		case SW6 :
 			input = '6';
+			push_counter++;
 			break;
 		case SW7 :
 			input = '7';
+			push_counter++;
 			break;
 		case SW8 :
 			input = '8';
+			push_counter++;
 			break;
 		case SW9 :
 			input = '9';
+			push_counter++;
 			break;
 		default : // NO_SWITCH
 			input = 0;
 			break;
 	}// end of switch(shmaddr[2]) of 숫자 쓰기
-	push_counter++;
 	repeater=1;
 }// end of else 숫자 쓰기
-	update_shm_mode3(shmaddr,string,input,eng_num_flag,repeater);
+	update_shm_mode3(shmaddr,string,input,eng_num_flag,repeater,push_counter);
 	enter_mode3++;
 	printf("@@@@@enter_mode3 = %d\n",enter_mode3);
 	printf("-----push_counter = %d\n",push_counter);
