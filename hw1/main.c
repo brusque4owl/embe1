@@ -266,6 +266,7 @@ int main(){
 							mode3(shmaddr);
 							break;
 						case MODE4 :
+							delay(2);
 							mode4(shmaddr);
 							break;
 						default :	// 이런 경우는 없음
@@ -401,6 +402,10 @@ int main(){
 								return -1;
 							}
 							break;
+
+
+
+
 // DRAW BOARD MODE : WRITE to FND_DEVICE, DOT_DEVICE
 						case 4 : // draw board mode
 				// shmaddr 변경한게 반영 안되는 문제 발생시 아래쪽 clear shared memory 확인
@@ -409,6 +414,7 @@ int main(){
 							static int blink_counter=0;
 							unsigned char dot_arr[10];	// DOT_DEVICE에 쓸 때 사용
 							if(shmaddr[19]==1) blink_counter=0;	// 모드 최초진입시 counter 초기화
+
 						// blink처리하여 DOT_DEVICE에 출력		
 							if(shmaddr[11]==1){	// blink 처리 : 이게 기본 모드
 								//delay(1);
@@ -466,7 +472,9 @@ int main(){
 							printf("Error on calculating mode number\n");
 							break;
 					}// END OF SWITCH
-					//printf("output - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
+					printf("output - mode = %d\tdot_matrix = [%d][%d][%d][%d][%d][%d][%d][%d][%d][%d]\n",
+							shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4],shmaddr[5],
+							shmaddr[6],shmaddr[7],shmaddr[8],shmaddr[9],shmaddr[10]);
 
 			
 			// clear shared memory
