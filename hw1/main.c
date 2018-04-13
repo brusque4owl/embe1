@@ -24,6 +24,7 @@
 #include "mode1.h"
 #include "mode2.h"
 #include "mode3.h"
+#include "mode4.h"
 #include "dot_font.h"
 
 #define SHM_SIZE 1024
@@ -261,10 +262,11 @@ int main(){
 							mode2(shmaddr);
 							break;
 						case MODE3 :
-							delay(2);
+							//delay(2);
 							mode3(shmaddr);
 							break;
 						case MODE4 :
+							mode4(shmaddr);
 							break;
 						default :	// 이런 경우는 없음
 							printf("mode value is wrong. check INPUT PROCESS or MAIN PROCESS\n");
@@ -425,12 +427,12 @@ int main(){
 									int x,y,cursor_value;
 									x=shmaddr[12]; y=shmaddr[13]; cursor_value=shmaddr[14];
 									if(cursor_value==1){	// 해당 점에 불들어와있으니까 값을 빼줘야함
-										if(blink_counter%2==0) shmaddr[y] -= power(6-x);
+										if(blink_counter%2==0) shmaddr[y] -= (char)power(6-x);
 										// 빼주기만 하면됨. 다음 count때에는 가만히 놔두면 원래값 출력해서 불켜짐
 										blink_counter++;
 									}
 									else{//cursor_value==0  // 해당 점에 불꺼져있으니까 값을 더해줘야함
-										if(blink_counter%2==0) shmaddr[y] += power(6-x);
+										if(blink_counter%2==0) shmaddr[y] += (char)power(6-x);
 										blink_counter++;
 									}
 									// DOT_DEVICE에 출력
