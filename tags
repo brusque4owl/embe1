@@ -4,22 +4,95 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-BACK	hw1/main.c	15;"	d	file:
-BUFF_SIZE	hw1/readkey.c	15;"	d	file:
+BACK	hw1/main.c	32;"	d	file:
+BASE10	hw1/mode2.c	21;"	d	file:
+BASE2	hw1/mode2.c	24;"	d	file:
+BASE4	hw1/mode2.c	23;"	d	file:
+BASE8	hw1/mode2.c	22;"	d	file:
+BUFF_SIZE	hw1/main.c	31;"	d	file:
 CC	hw1/Makefile	/^CC		= arm-none-linux-gnueabi-gcc$/;"	m
 CFLAGS	hw1/Makefile	/^CFLAGS	= -W -Wall$/;"	m
-KEY_PRESS	hw1/readkey.c	18;"	d	file:
-KEY_RELEASE	hw1/readkey.c	17;"	d	file:
-SEM_SIZE	hw1/main.c	13;"	d	file:
+CLEAR	hw1/mode4.c	39;"	d	file:
+CLOCK_PER_SEC	hw1/main.c	52;"	d	file:
+CURSOR	hw1/mode4.c	37;"	d	file:
+DOT_DEVICE	hw1/main.c	47;"	d	file:
+DOWN	hw1/mode4.c	43;"	d	file:
+FND_DEVICE	hw1/main.c	41;"	d	file:
+FPGA_BASE_ADDRESS	hw1/main.c	44;"	d	file:
+KEY_DEVICE	hw1/main.c	42;"	d	file:
+LCD_DEVICE	hw1/main.c	46;"	d	file:
+LED_ADDR	hw1/main.c	45;"	d	file:
+LEFT	hw1/mode4.c	44;"	d	file:
+MAX_BUFF	hw1/main.c	50;"	d	file:
+MAX_BUFF	hw1/mode3.c	32;"	d	file:
+MAX_BUTTON	hw1/main.c	49;"	d	file:
+MODE1	hw1/main.c	36;"	d	file:
+MODE2	hw1/main.c	37;"	d	file:
+MODE3	hw1/main.c	38;"	d	file:
+MODE4	hw1/main.c	39;"	d	file:
+NO_SWITCH	hw1/mode3.c	18;"	d	file:
+NO_SWITCH	hw1/mode4.c	25;"	d	file:
+RESET	hw1/mode4.c	36;"	d	file:
+REVERSE	hw1/mode4.c	40;"	d	file:
+RIGHT	hw1/mode4.c	45;"	d	file:
+SELECT	hw1/mode4.c	38;"	d	file:
+SHM_SIZE	hw1/main.c	30;"	d	file:
+SW1	hw1/mode1.c	17;"	d	file:
+SW1	hw1/mode2.c	17;"	d	file:
+SW1	hw1/mode3.c	19;"	d	file:
+SW1	hw1/mode4.c	26;"	d	file:
+SW2	hw1/mode1.c	18;"	d	file:
+SW2	hw1/mode2.c	18;"	d	file:
+SW2	hw1/mode3.c	20;"	d	file:
+SW2	hw1/mode4.c	27;"	d	file:
+SW3	hw1/mode1.c	19;"	d	file:
+SW3	hw1/mode2.c	19;"	d	file:
+SW3	hw1/mode3.c	21;"	d	file:
+SW3	hw1/mode4.c	28;"	d	file:
+SW4	hw1/mode1.c	20;"	d	file:
+SW4	hw1/mode2.c	20;"	d	file:
+SW4	hw1/mode3.c	22;"	d	file:
+SW4	hw1/mode4.c	29;"	d	file:
+SW5	hw1/mode3.c	23;"	d	file:
+SW5	hw1/mode4.c	30;"	d	file:
+SW6	hw1/mode3.c	24;"	d	file:
+SW6	hw1/mode4.c	31;"	d	file:
+SW7	hw1/mode3.c	25;"	d	file:
+SW7	hw1/mode4.c	32;"	d	file:
+SW8	hw1/mode3.c	26;"	d	file:
+SW8	hw1/mode4.c	33;"	d	file:
+SW9	hw1/mode3.c	27;"	d	file:
+SW9	hw1/mode4.c	34;"	d	file:
+SWITCH_DEVICE	hw1/main.c	43;"	d	file:
 TARGET	hw1/Makefile	/^TARGET	= main$/;"	m
-VOL_MINUS	hw1/main.c	17;"	d	file:
-VOL_PLUS	hw1/main.c	16;"	d	file:
+UP	hw1/mode4.c	42;"	d	file:
+VOL_MINUS	hw1/main.c	34;"	d	file:
+VOL_MINUS	hw1/mode1.c	23;"	d	file:
+VOL_MINUS	hw1/mode2.c	27;"	d	file:
+VOL_MINUS	hw1/mode3.c	30;"	d	file:
+VOL_MINUS	hw1/mode4.c	48;"	d	file:
+VOL_PLUS	hw1/main.c	33;"	d	file:
+VOL_PLUS	hw1/mode1.c	22;"	d	file:
+VOL_PLUS	hw1/mode2.c	26;"	d	file:
+VOL_PLUS	hw1/mode3.c	29;"	d	file:
+VOL_PLUS	hw1/mode4.c	47;"	d	file:
 array	hw1/sema.h	/^	unsigned short *array;$/;"	m	union:semun
 buf	hw1/sema.h	/^	struct semid_ds *buf;$/;"	m	union:semun	typeref:struct:semun::semid_ds
+delay	hw1/main.c	/^__inline void delay(clock_t second){$/;"	f
+english	hw1/dot_font.h	/^unsigned char english[10] = {$/;"	v
 initsem	hw1/sema.c	/^int initsem(key_t semkey, int val){$/;"	f
 main	hw1/main.c	/^int main(){$/;"	f
-readkey	hw1/readkey.c	/^int readkey (void)$/;"	f
+mode1	hw1/mode1.c	/^int mode1(char *shmaddr){$/;"	f
+mode2	hw1/mode2.c	/^int mode2(char *shmaddr){$/;"	f
+mode3	hw1/mode3.c	/^int mode3(char *shmaddr){$/;"	f
+mode4	hw1/mode4.c	/^int mode4(char *shmaddr){$/;"	f
+number	hw1/dot_font.h	/^unsigned char number[10] = {$/;"	v
+power	hw1/mode4.c	/^int power(int exp){$/;"	f
 semlock	hw1/sema.c	/^int semlock(int semid){$/;"	f
 semun	hw1/sema.h	/^union semun{$/;"	u
 semunlock	hw1/sema.c	/^int semunlock(int semid){$/;"	f
+update_shm_mode1	hw1/mode1.c	/^__inline void update_shm_mode1(char *shmaddr, int hour, int minute, bool flag){$/;"	f
+update_shm_mode2	hw1/mode2.c	/^__inline void update_shm_mode2(char *shmaddr, int num, int base){$/;"	f
+update_shm_mode3	hw1/mode3.c	/^__inline void update_shm_mode3(char *shmaddr, char *string, char input, bool flag, int repeater, int counter){$/;"	f
+update_shm_mode4	hw1/mode4.c	/^__inline void update_shm_mode4(char *shmaddr,int dot_matrix[10],bool cursor_blink, $/;"	f
 val	hw1/sema.h	/^	int val;$/;"	m	union:semun

@@ -47,6 +47,7 @@
 #define VOL_PLUS 115
 #define VOL_MINUS 114
 
+#define CLOCK_PER_SEC 100000
 int power(int exp){
 	int i,result=1;
 	for(i=0;i<exp;i++)
@@ -97,6 +98,8 @@ __inline void update_shm_mode4(char *shmaddr,int dot_matrix[10],bool cursor_blin
 
 int mode4(char *shmaddr){
 	int i,j;
+	static bool remember_before_blink=false;	// 깜빡임 모드에서 기존의 marked 값을 기억해야 깜빡임 이후에 복원
+	static int blink_counter = 0;
 	static bool cursor_blink = true;	// 커서 깜빡임 여부. 초기상태 : 깜빡임
 	static int  cursor_x = 0, cursor_y = 0;	// x is row number, y is col number
 	static bool cursor_marked = 0;
@@ -115,8 +118,10 @@ int mode4(char *shmaddr){
 		{0,0,0,0,0,0,0}
 	};
 	if(fnd_counter==10000) fnd_counter=0;
-// 모드 변경을 통해 mode4 진입시 초기화(커서 깜빡임, 커서 좌표 및 마킹 여부, fnd카운터, 모드4진입 카운터, 매트릭스)
+// 0. 모드 변경을 통해 mode4 진입시 초기화(커서 깜빡임, 커서 좌표 및 마킹 여부, fnd카운터, 모드4진입 카운터, 매트릭스)
 	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
+		remember_before_blink = false;
+		blink_counter = 0;
 		cursor_blink = true;
 		cursor_x = 0, cursor_y = 0;
 		cursor_marked = 0;
@@ -129,7 +134,7 @@ int mode4(char *shmaddr){
 	}
 	//dot_matrix는 DOT_DEVICE에 작성할 때 사용
 	int dot_matrix[10] ={0,};	// mode4()진입 시마다 point_matrix[10][7]을 바탕으로 새로 계산
-// shmaddr으로 들어온 스위치를 분석하여 작업 수행(커서이동, 선택(마킹), 리셋, 깜빡임변경, clear, 반전)
+// 1. shmaddr으로 들어온 스위치를 분석하여 작업 수행(커서이동, 선택(마킹), 리셋, 깜빡임변경, clear, 반전)
 	switch(shmaddr[2]){
 	// Special keys
 		case RESET : // 1
@@ -138,13 +143,15 @@ int mode4(char *shmaddr){
 				for(j=0;j<7;j++)
 					point_matrix[i][j]=0;
 			// Reset values
+			remember_before_blink = false;
 			cursor_blink = true;
 			cursor_x = 0; cursor_y = 0;
 			cursor_marked = 0;
 			fnd_counter++;
 			break;
-		case CURSOR :
+		case CURSOR : // 커서 깜빡임 모드 변경
 			cursor_blink = !cursor_blink; // flag반전. 나머지는 유지
+			if(cursor_blink==false) blink_counter = 0; // 초기화
 			fnd_counter++;
 			break;
 		case CLEAR : // 7
@@ -162,26 +169,33 @@ int mode4(char *shmaddr){
 	// General keys
 		case SELECT ://SW5
 			// 현재 커서의 마킹값을 반전시킨 뒤 매트릭스에 저장
+			// blink 모드면 remember_before_blink에 값을 기억해두어야함.
+			if(cursor_blink==true)		remember_before_blink=point_matrix[cursor_x][cursor_y];
 			cursor_marked = !cursor_marked;
 			point_matrix[cursor_x][cursor_y] = cursor_marked;	// 저장
 			fnd_counter++;
 			break;
 		case UP : 	 //SW2
+			// blink 모드면 cursor 좌표 바꾸기 전에 remember_before_blink에서 값을 복원해주고 움직여야함
+			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = remember_before_blink;
 			cursor_x--; if(cursor_x<0) cursor_x=0;
 			cursor_marked = point_matrix[cursor_x][cursor_y];	// 저장해 놓은 값을 가져옴
 			fnd_counter++;
 			break;
 		case DOWN :	 //SW8
+			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = remember_before_blink;
 			cursor_x++; if(cursor_x>9) cursor_x=9;
 			cursor_marked = point_matrix[cursor_x][cursor_y];
 			fnd_counter++;
 			break;
 		case LEFT :	 //SW4
+			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = remember_before_blink;
 			cursor_y--; if(cursor_y<0) cursor_y=0;
 			cursor_marked = point_matrix[cursor_x][cursor_y];
 			fnd_counter++;
 			break;
 		case RIGHT : //SW6
+			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = remember_before_blink;
 			cursor_y++;	if(cursor_y>6) cursor_y=6;
 			cursor_marked = point_matrix[cursor_x][cursor_y];
 			fnd_counter++;
@@ -190,7 +204,8 @@ int mode4(char *shmaddr){
 			printf("Nothing is pushed\n");
 			break;		 
 	}// end of switch(shmaddr[2]) 분석
-// 위에서 작성된 point_matrix를 바탕으로 dot_matrix 작성
+
+// 2. 위에서 작성된 point_matrix를 바탕으로 dot_matrix 작성
 	int result;	// dot_matrix에 들어갈 값을 계산
 	for(i=0;i<10;i++){
 		result=0;
@@ -200,7 +215,28 @@ int mode4(char *shmaddr){
 		}// row값 계산 완료  ex) 0111001 = 57
 		dot_matrix[i]=result;
 	}
-// UPDATE SHARED MEMORY
+// -- blink 모드 처리
+	//remember_before_blink=point_matrix[cursor_x][cursor_y];	// 깜빡이기 이전의 point_matrix에서 marked값 기억
+	if(cursor_blink==true){
+		static bool time_check=false;
+		static clock_t blink_time; // 깜빡이기 시작한 시간
+		if(time_check==0){// 여기는 시간 측정 시작때만 들어옴
+			blink_time=clock(); // 시간 측정 시작
+			time_check = true;
+		}
+
+		clock_t elapsed_time = clock(); // 시간 경과 체크
+
+		// 해당 if문은 1초마다만 들어올 수 있음
+		if(elapsed_time - blink_time>CLOCK_PER_SEC){ 
+			time_check = false;	//초기화해야 다시 시작 시간 측정
+			// matrix업데이트(원래 값을 뒤집어 줌)
+			if(blink_counter%2==0)  point_matrix[cursor_x][cursor_y]=!point_matrix[cursor_x][cursor_y];
+			blink_counter++;
+		}// blink위해 반전 처리 완료
+	}
+
+// 3. UPDATE SHARED MEMORY
 	update_shm_mode4(shmaddr, dot_matrix, cursor_blink, cursor_x, cursor_y, cursor_marked, fnd_counter, enter_mode4);
 	enter_mode4++;
 	printf("cursor_blink = %d\t cursor_x = %d / cursor_y = %d\ncursor_marked = %d\t enter_mode4 = %d\n",cursor_blink,cursor_x,cursor_y,cursor_marked, enter_mode4);
