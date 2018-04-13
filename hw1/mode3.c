@@ -244,49 +244,191 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = '.';
 		}
-		// 이 지점에서 string과 input 합치기
-
-	}
+	}// end of SW1
 	else if(shmaddr[2]==SW2){
-		previous_sw = shmaddr[2];
-		repeater = 1;
-		input = 'A';
-	}
+		if(previous_sw==shmaddr[2]){
+			// input을 다음 문자로 바꿔준다.
+			switch(repeater%3){
+				case 0 :
+					input = 'A';
+					break;
+				case 1 :
+					input = 'B';
+					break;
+				case 2 :
+					input = 'C';
+					break;
+			}
+			repeater++;	// repeater증가
+		}
+		else{
+			// input에 첫번째 대표문자를 넣어준다.
+			previous_sw = shmaddr[2];
+			repeater = 1;
+			input = 'A';
+		}
+	}// end of SW2
 	else if(shmaddr[2]==SW3){
-		previous_sw = shmaddr[2];
-		repeater = 1;
-		input = 'D';
-	}
+		if(previous_sw==shmaddr[2]){
+			// input을 다음 문자로 바꿔준다.
+			switch(repeater%3){
+				case 0 :
+					input = 'D';
+					break;
+				case 1 :
+					input = 'E';
+					break;
+				case 2 :
+					input = 'F';
+					break;
+			}
+			repeater++;	// repeater증가
+		}
+		else{
+			// input에 첫번째 대표문자를 넣어준다.
+			previous_sw = shmaddr[2];
+			repeater = 1;
+			input = 'D';
+		}
+	}// end of SW3
 	else if(shmaddr[2]==SW4){
-		previous_sw = shmaddr[2];
-		repeater = 1;
-		input = 'G';
-	}
+		if(previous_sw==shmaddr[2]){
+			// input을 다음 문자로 바꿔준다.
+			switch(repeater%3){
+				case 0 :
+					input = 'G';
+					break;
+				case 1 :
+					input = 'H';
+					break;
+				case 2 :
+					input = 'I';
+					break;
+			}
+			repeater++;	// repeater증가
+		}
+		else{
+			// input에 첫번째 대표문자를 넣어준다.
+			previous_sw = shmaddr[2];
+			repeater = 1;
+			input = 'G';
+		}
+	}// end of SW4
 	else if(shmaddr[2]==SW5){
-		previous_sw = shmaddr[2];
-		repeater = 1;
-		input = 'J';
-	}
+		if(previous_sw==shmaddr[2]){
+			// input을 다음 문자로 바꿔준다.
+			switch(repeater%3){
+				case 0 :
+					input = 'J';
+					break;
+				case 1 :
+					input = 'K';
+					break;
+				case 2 :
+					input = 'L';
+					break;
+			}
+			repeater++;	// repeater증가
+		}
+		else{
+			// input에 첫번째 대표문자를 넣어준다.
+			previous_sw = shmaddr[2];
+			repeater = 1;
+			input = 'J';
+		}
+	}// end of SW5
 	else if(shmaddr[2]==SW6){
-		previous_sw = shmaddr[2];
-		repeater = 1;
-		input = 'M';
-	}
+		if(previous_sw==shmaddr[2]){
+			// input을 다음 문자로 바꿔준다.
+			switch(repeater%3){
+				case 0 :
+					input = 'M';
+					break;
+				case 1 :
+					input = 'N';
+					break;
+				case 2 :
+					input = 'O';
+					break;
+			}
+			repeater++;	// repeater증가
+		}
+		else{
+			// input에 첫번째 대표문자를 넣어준다.
+			previous_sw = shmaddr[2];
+			repeater = 1;
+			input = 'M';
+		}
+	}// end of SW6
 	else if(shmaddr[2]==SW7){
-		previous_sw = shmaddr[2];
-		repeater = 1;
-		input = 'P';
-	}
+		if(previous_sw==shmaddr[2]){
+			// input을 다음 문자로 바꿔준다.
+			switch(repeater%3){
+				case 0 :
+					input = 'P';
+					break;
+				case 1 :
+					input = 'R';
+					break;
+				case 2 :
+					input = 'S';
+					break;
+			}
+			repeater++;	// repeater증가
+		}
+		else{
+			// input에 첫번째 대표문자를 넣어준다.
+			previous_sw = shmaddr[2];
+			repeater = 1;
+			input = 'P';
+		}
+	}// end of SW7
 	else if(shmaddr[2]==SW8){
-		previous_sw = shmaddr[2];
-		repeater = 1;
-		input = 'T';
-	}
+		if(previous_sw==shmaddr[2]){
+			// input을 다음 문자로 바꿔준다.
+			switch(repeater%3){
+				case 0 :
+					input = 'T';
+					break;
+				case 1 :
+					input = 'U';
+					break;
+				case 2 :
+					input = 'V';
+					break;
+			}
+			repeater++;	// repeater증가
+		}
+		else{
+			// input에 첫번째 대표문자를 넣어준다.
+			previous_sw = shmaddr[2];
+			repeater = 1;
+			input = 'T';
+		}
+	}// end of SW8
 	else if(shmaddr[2]==SW9){
-		previous_sw = shmaddr[2];
-		repeater = 1;
-		input = 'W';
-	}
+		if(previous_sw==shmaddr[2]){
+			// input을 다음 문자로 바꿔준다.
+			switch(repeater%3){
+				case 0 :
+					input = 'W';
+					break;
+				case 1 :
+					input = 'X';
+					break;
+				case 2 :
+					input = 'Y';
+					break;
+			}
+			repeater++;	// repeater증가
+		}
+		else{
+			// input에 첫번째 대표문자를 넣어준다.
+			previous_sw = shmaddr[2];
+			repeater = 1;
+			input = 'W';
+		}
+	}// end of SW9
 }// 영어 쓰기
 else{//숫자 쓰기
 	switch(shmaddr[2]){
