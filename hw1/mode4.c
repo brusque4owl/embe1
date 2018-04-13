@@ -164,8 +164,9 @@ int mode4(char *shmaddr){
 			fnd_counter++;
 			break;
 		case CURSOR : // 커서 깜빡임 모드 변경
+			if(cursor_blink==true)	point_matrix[cursor_x][cursor_y] = copy_matrix[cursor_x][cursor_y];
+			else 					blink_counter = 0; // 초기화
 			cursor_blink = !cursor_blink; // flag반전. 나머지는 유지
-			if(cursor_blink==false) blink_counter = 0; // 초기화
 			fnd_counter++;
 			break;
 		case CLEAR : // 7
