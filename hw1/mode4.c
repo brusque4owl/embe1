@@ -162,27 +162,27 @@ int mode4(char *shmaddr){
 		case SELECT :
 			// 현재 커서의 마킹값을 반전시킨 뒤 매트릭스에 저장
 			cursor_marked = !cursor_marked;
-			point_matrix[cursor_x][cursor_y] = cursor_marked;	
+			point_matrix[cursor_x][cursor_y] = cursor_marked;	// 저장
 			fnd_counter++;
 			break;
 		case UP : 	 //SW2
 			cursor_x--; if(cursor_x<0) cursor_x=0;
-			cursor_marked = 0;	// 위치 바꾸면 마킹 여부 초기화
+			cursor_marked = point_matrix[cursor_x][cursor_y];	// 저장해 놓은 값을 가져옴
 			fnd_counter++;
 			break;
 		case DOWN :	 //SW8
 			cursor_x++; if(cursor_x>9) cursor_x=9;
-			cursor_marked = 0;
+			cursor_marked = point_matrix[cursor_x][cursor_y];
 			fnd_counter++;
 			break;
 		case LEFT :	 //SW4
 			cursor_y--; if(cursor_y<0) cursor_y=0;
-			cursor_marked = 0;
+			cursor_marked = point_matrix[cursor_x][cursor_y];
 			fnd_counter++;
 			break;
 		case RIGHT : //SW6
 			cursor_y++;	if(cursor_y>6) cursor_y=6;
-			cursor_marked = 0;
+			cursor_marked = point_matrix[cursor_x][cursor_y];
 			fnd_counter++;
 			break;
 		default :	// NO_SWITCH
