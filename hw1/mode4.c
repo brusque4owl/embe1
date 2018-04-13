@@ -96,6 +96,7 @@ __inline void update_shm_mode4(char *shmaddr,int dot_matrix[10],bool cursor_flag
 }
 
 int mode4(char *shmaddr){
+	int i,j;
 	static bool cursor_flag = true;	// 커서 깜빡임 여부. 초기상태 : 깜빡임
 	static int  cursor_x = 0, cursor_y = 0;
 	static bool cursor_marked = 0;
@@ -110,8 +111,45 @@ int mode4(char *shmaddr){
 		{0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0}
 	};
+	if(fnd_counter==10000) fnd_counter=0;
+// 모드 변경을 통해 mode4 진입시 초기화(커서 깜빡임, 커서 좌표 및 마킹 여부, fnd카운터, 모드4진입 카운터, 매트릭스)
+	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
+		cursor_flag = true;
+		cursor_x = 0, cursor_y = 0;
+		cursor_marked = 0;
+		fnd_counter = 0;
+		enter_mode4 = 0;
+		for(i=0;i<7;i++)
+			for(j=0;j<10;j++)
+				matrix[i][j]=0;
+		// for문 끝
+	}
 	int dot_matrix[10] ={0,};	// dot_matrix는 mode4()진입 시마다 matrix[7][10]을 바탕으로 새로 계산
-	// 모드 변경을 통해 mode4 진입 시
+// shmaddr으로 들어온 스위치를 분석하여 작업 수행(커서이동, 선택(마킹), 리셋, 깜빡임변경, clear, 반전)
+	switch(shmaddr[2]){
+		case RESET :
+			break;
+		case CURSOR :
+			break;
+		case SELECT :
+			break;
+		case CLEAR :
+			break;
+		case REVERSE :
+			break;
+		case UP :
+			break;
+		case DOWN :
+			break;
+		case LEFT :
+			break;
+		case RIGHT :
+			break;
+		default :	// NO_SWITCH
+			printf("Nothing is pushed\n");
+			break;		 
+	}// end of switch(shmaddr[2]) 분석
+// 위에서 작성된 matrix를 바탕으로 dot_matrix 작성
 	update_shm_mode4(shmaddr, dot_matrix, cursor_flag, cursor_x, cursor_y, cursor_marked, fnd_counter, enter_mode4);
 	return 0;
 }
