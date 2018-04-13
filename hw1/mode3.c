@@ -166,8 +166,9 @@ int mode3(char *shmaddr){
 	static bool eng_num_flag=false;	// false : english | true : number
 	static int previous_sw=NO_SWITCH;
 	static int repeater = 0;
+	static int push_counter = 0;
 	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
-// 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열, 영수 플래그, 도트 매트릭스,이전 스위치,문자반복입력카운터)
+// 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열, 영수 플래그, 도트 매트릭스,이전 스위치,문자반복입력,푸시카운터)
 		enter_mode3=0;	
 		input=0;
 		memset(string,0,sizeof(string));
@@ -175,6 +176,7 @@ int mode3(char *shmaddr){
 		shmaddr[35]=0;	// 도트 매트리스에 사용할 플래그(0->eng / 1->num)
 		previous_sw = NO_SWITCH;
 		repeater = 0;
+		push_counter = 0;
 	}
 	int i;
 
@@ -208,6 +210,7 @@ int mode3(char *shmaddr){
 		repeater = 1; // 공백도 처음 쓰는 것으로 판단
 		update_shm_mode3(shmaddr, string, input, eng_num_flag,repeater);
 		previous_sw = NO_SWITCH;
+		push_counter++;	// 공백도 하나의 text 입력임
 		repeater = 0;
 		return 0;
 	}
@@ -244,6 +247,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = '.';
 		}
+		push_counter++;
 	}// end of SW1
 	else if(shmaddr[2]==SW2){
 		if(previous_sw==shmaddr[2]){
@@ -267,6 +271,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = 'A';
 		}
+		push_counter++;
 	}// end of SW2
 	else if(shmaddr[2]==SW3){
 		if(previous_sw==shmaddr[2]){
@@ -290,6 +295,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = 'D';
 		}
+		push_counter++;
 	}// end of SW3
 	else if(shmaddr[2]==SW4){
 		if(previous_sw==shmaddr[2]){
@@ -313,6 +319,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = 'G';
 		}
+		push_counter++;
 	}// end of SW4
 	else if(shmaddr[2]==SW5){
 		if(previous_sw==shmaddr[2]){
@@ -336,6 +343,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = 'J';
 		}
+		push_counter++;
 	}// end of SW5
 	else if(shmaddr[2]==SW6){
 		if(previous_sw==shmaddr[2]){
@@ -359,6 +367,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = 'M';
 		}
+		push_counter++;
 	}// end of SW6
 	else if(shmaddr[2]==SW7){
 		if(previous_sw==shmaddr[2]){
@@ -382,6 +391,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = 'P';
 		}
+		push_counter++;
 	}// end of SW7
 	else if(shmaddr[2]==SW8){
 		if(previous_sw==shmaddr[2]){
@@ -405,6 +415,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = 'T';
 		}
+		push_counter++;
 	}// end of SW8
 	else if(shmaddr[2]==SW9){
 		if(previous_sw==shmaddr[2]){
@@ -428,6 +439,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = 'W';
 		}
+		push_counter++;
 	}// end of SW9
 }// 영어 쓰기
 else{//숫자 쓰기
@@ -463,11 +475,13 @@ else{//숫자 쓰기
 			input = 0;
 			break;
 	}// end of switch(shmaddr[2]) of 숫자 쓰기
+	push_counter++;
 	repeater=1;
-}
+}// end of else 숫자 쓰기
 	update_shm_mode3(shmaddr,string,input,eng_num_flag,repeater);
 	enter_mode3++;
 	printf("@@@@@enter_mode3 = %d\n",enter_mode3);
+	printf("-----push_counter = %d\n",push_counter);
 	return 0;
 }//END OF mode3()
 /*
