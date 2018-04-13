@@ -41,6 +41,7 @@
 
 */
 
+/*
 __inline void update_shm_mode3(char *shmaddr, char *string, char input, bool flag){
 	int i;
 	shmaddr[0]=3;	// mode 3
@@ -84,8 +85,80 @@ __inline void update_shm_mode3(char *shmaddr, char *string, char input, bool fla
 		printf("%c",shmaddr[i]);
 	printf("\n");
 }
+*/
+/*
+__inline void update_shm_mode3(char *shmaddr, char *string, char input, bool flag){
+	int i;
+	shmaddr[0]=3;	// mode 3
+	int len = (int)strlen(string);
+	// string이 처리되어 넘어오니까 string이 몇 글자이든 shmaddr에 써주기만 하면됨
+	for(i=0;i<=len;i++){
+		shmaddr[i+1]=string[i];
+	}
 
+	// DOT MATRIX 처리용
+	if(flag==false) shmaddr[35]=0;	// ENG
+	else			shmaddr[35]=1;  // NUM
+}
+*/
+__inline void update_shm_mode3(char *shmaddr, char *string, char input, bool flag, int repeater){
+	int i;
+	int len = (int)strlen(string);
 
+	// DOT MATRIX 처리용
+	if(flag==false) shmaddr[35]=0;	// ENG
+	else			shmaddr[35]=1;  // NUM
+
+//아무 입력이 없을 때
+	if(input==0){ 	// 길이 32부터는 대기상태에서 널스트링 오는거 처리X
+		for(i=0;i<=len;i++){
+			shmaddr[i+1]=string[i];
+		}
+		return;
+	}// end of if 아무입력 없을 때
+
+// 입력이 들어오는 경우
+// 글자수가 32이상
+	if(len>=32){
+			if(repeater==1){// 해당 스위치를 처음 입력 -> 글자 작성
+					for(i=0;i<len-1;i++){// shmaddr과 string 모두 업데이트
+						string[i]=string[i+1]; // 한칸씩 앞으로 이동
+						shmaddr[i+1]=string[i+1];
+					}
+					string[i]=input;	// i=31인 상황
+					shmaddr[i+1]=input;
+			}
+			else{ // 해당 스위치를 반복 입력 -> 기존 마지막 글자만 변환
+					for(i=0;i<len-1;i++){ // 1~31글자 복사하고, 32에 input추가
+						shmaddr[i+1]=string[i]; // 이동없이 마지막만 수정
+					}
+					string[i]=input;	// i=31 | string[31]은 string의 32번째 글자
+					shmaddr[i+1]=input;
+			}
+	}// end of if(len>=32)
+// 글자수가 32미만
+	else{
+		//1. shm에 기존 string 작성
+		for(i=0;i<len;i++)
+			shmaddr[i+1]=string[i];
+		if(repeater==1){ // 해당 스위치 최초 입력 -> 글자 작성
+			// i==len인 상황
+			//2. shm에 input 작성
+			shmaddr[i+1]=input;
+			//3. string 업데이트
+			string[i]=input;
+			string[i+1]='\0';
+		}
+		else{			 // 해당 스위치 반복 입력 -> 기존 마지막 글자 바꿈
+			// i==len인 상황
+			//2. shm에 input 작성
+			shmaddr[i]=input;
+			//3. string 업데이트
+			string[i-1]=input;
+			string[i]='\0';
+		}
+	}
+}
 int mode3(char *shmaddr){
 	static int enter_mode3=0;
 	static char input=0; // 모드3오면 input을 NUL로 초기화/ 이후 변경내역 기역
@@ -115,7 +188,7 @@ int mode3(char *shmaddr){
 			memset(string,0,sizeof(string));
 			input=0;
 		}
-		update_shm_mode3(shmaddr, string, 0, eng_num_flag);
+		update_shm_mode3(shmaddr, string, 0, eng_num_flag,repeater);
 		previous_sw = NO_SWITCH;
 		repeater = 0;
 		return 0;
@@ -124,7 +197,7 @@ int mode3(char *shmaddr){
 	else if(shmaddr[2]==SW5 && shmaddr[3]==SW6){
 		eng_num_flag=!eng_num_flag;	// flag 뒤집기
 		input=0;// input은 청소해야함.
-		update_shm_mode3(shmaddr, string, 0, eng_num_flag); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
+		update_shm_mode3(shmaddr, string, 0, eng_num_flag,repeater); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
 		previous_sw = NO_SWITCH;
 		repeater = 0;
 		return 0;
@@ -132,7 +205,8 @@ int mode3(char *shmaddr){
 	// MAKE A SPACE 작동 확인
 	else if(shmaddr[2]==SW8 && shmaddr[3]==SW9){
 		input = ' '; // 공백==32
-		update_shm_mode3(shmaddr, string, input, eng_num_flag);
+		repeater = 1; // 공백도 처음 쓰는 것으로 판단
+		update_shm_mode3(shmaddr, string, input, eng_num_flag,repeater);
 		previous_sw = NO_SWITCH;
 		repeater = 0;
 		return 0;
@@ -170,6 +244,7 @@ if(eng_num_flag==false){
 			repeater = 1;
 			input = '.';
 		}
+		// 이 지점에서 string과 input 합치기
 
 	}
 	else if(shmaddr[2]==SW2){
@@ -188,18 +263,28 @@ if(eng_num_flag==false){
 		input = 'G';
 	}
 	else if(shmaddr[2]==SW5){
+		previous_sw = shmaddr[2];
+		repeater = 1;
 		input = 'J';
 	}
 	else if(shmaddr[2]==SW6){
+		previous_sw = shmaddr[2];
+		repeater = 1;
 		input = 'M';
 	}
 	else if(shmaddr[2]==SW7){
+		previous_sw = shmaddr[2];
+		repeater = 1;
 		input = 'P';
 	}
 	else if(shmaddr[2]==SW8){
+		previous_sw = shmaddr[2];
+		repeater = 1;
 		input = 'T';
 	}
 	else if(shmaddr[2]==SW9){
+		previous_sw = shmaddr[2];
+		repeater = 1;
 		input = 'W';
 	}
 }// 영어 쓰기
@@ -236,9 +321,9 @@ else{//숫자 쓰기
 			input = 0;
 			break;
 	}// end of switch(shmaddr[2]) of 숫자 쓰기
+	repeater=1;
 }
-
-	update_shm_mode3(shmaddr,string,input,eng_num_flag);
+	update_shm_mode3(shmaddr,string,input,eng_num_flag,repeater);
 	enter_mode3++;
 	printf("@@@@@enter_mode3 = %d\n",enter_mode3);
 	return 0;
