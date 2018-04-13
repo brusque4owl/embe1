@@ -153,6 +153,7 @@ int mode4(char *shmaddr){
 			for(i=0;i<10;i++)
 				for(j=0;j<7;j++)
 					point_matrix[i][j]=0;
+			cursor_marked = 0;
 			fnd_counter++;
 			break;
 		case REVERSE :	// 가장 마지막에 구현하기
