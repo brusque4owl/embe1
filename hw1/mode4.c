@@ -180,7 +180,12 @@ int mode4(char *shmaddr){
 			cursor_marked = 0;
 			fnd_counter++;
 			break;
-		case REVERSE :	// 가장 마지막에 구현하기
+		case REVERSE :	// 모든 dot를 반전시켜줌
+			for(i=0;i<10;i++)
+				for(j=0;j<7;j++){
+					point_matrix[i][j]=!point_matrix[i][j];
+					 copy_matrix[i][j]= !copy_matrix[i][j];
+				}
 			fnd_counter++;
 			break;
 	// General keys
