@@ -98,7 +98,7 @@ __inline void update_shm_mode4(char *shmaddr,int dot_matrix[10],bool cursor_flag
 int mode4(char *shmaddr){
 	static bool cursor_flag = true;	// 커서 깜빡임 여부. 초기상태 : 깜빡임
 	static int  cursor_x = 0, cursor_y = 0;
-	static bool cursor_value = 0;
+	static bool cursor_marked = 0;
 	static int  fnd_counter = 0;
 	static int  enter_mode4 = 0;	// blink_counter와 연동됨
 	static bool matrix[7][10] = {
@@ -110,8 +110,9 @@ int mode4(char *shmaddr){
 		{0,0,0,0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0,0,0,0}
 	};
+	int dot_matrix[10] ={0,};	// dot_matrix는 mode4()진입 시마다 matrix[7][10]을 바탕으로 새로 계산
 	// 모드 변경을 통해 mode4 진입 시
-
+	update_shm_mode4(shmaddr, dot_matrix, cursor_flag, cursor_x, cursor_y, cursor_marked, fnd_counter, enter_mode4);
 	return 0;
 }
 /*
