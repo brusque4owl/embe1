@@ -184,13 +184,13 @@ int main(){
 						shmaddr[0] = mode;
 						shmaddr[1] = mode_key;
 						mode = mode + 1;		// remember mode
-						if(mode > 4) mode = 1;
+						if(mode > 5) mode = 1;
 						break;
 					case VOL_MINUS : // subtract mode number
 						shmaddr[0] = mode;
 						shmaddr[1] = mode_key;
 						mode = mode - 1;		// remember mode
-						if(mode < 1) mode = 4;
+						if(mode < 1) mode = 5;
 						break;
 					default :	// other key - 모드 키 안누르는 경우에도 기존의 mode값은 전송해야함.
 						shmaddr[0] = mode;	// 갖고 있던 mode
