@@ -92,13 +92,16 @@ int mode3(char *shmaddr){
 	static char string[MAX_BUFF+1];
 	static bool eng_num_flag=false;	// false : english | true : number
 	static int previous_sw=NO_SWITCH;
+	static int repeater = 0;
 	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
-		enter_mode3=0;	// 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열, 영수 플래그, 도트 매트릭스,이전 스위치)
+// 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열, 영수 플래그, 도트 매트릭스,이전 스위치,문자반복입력카운터)
+		enter_mode3=0;	
 		input=0;
 		memset(string,0,sizeof(string));
 		eng_num_flag=false;
 		shmaddr[35]=0;	// 도트 매트리스에 사용할 플래그(0->eng / 1->num)
 		previous_sw = NO_SWITCH;
+		repeater = 0;
 	}
 	int i;
 
@@ -114,6 +117,7 @@ int mode3(char *shmaddr){
 		}
 		update_shm_mode3(shmaddr, string, 0, eng_num_flag);
 		previous_sw = NO_SWITCH;
+		repeater = 0;
 		return 0;
 	}
 	// ENGLISH <-> NUMBER 작동 확인 필요
@@ -122,6 +126,7 @@ int mode3(char *shmaddr){
 		input=0;// input은 청소해야함.
 		update_shm_mode3(shmaddr, string, 0, eng_num_flag); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
 		previous_sw = NO_SWITCH;
+		repeater = 0;
 		return 0;
 	}
 	// MAKE A SPACE 작동 확인
@@ -129,6 +134,7 @@ int mode3(char *shmaddr){
 		input = ' '; // 공백==32
 		update_shm_mode3(shmaddr, string, input, eng_num_flag);
 		previous_sw = NO_SWITCH;
+		repeater = 0;
 		return 0;
 	}
 // 버튼 2개 눌리는 상황은 모두 아래까지 안내려오도록하고 리턴시켰음
@@ -140,17 +146,45 @@ if(eng_num_flag==false){
 		// 모드에 반복 진입시 기존 정보로 shm을 update
 		// input만 nul로 막기
 		input = 0; // 0 = NUL in ASCII CODE(NULL string)
+		// previous_sw와 repeater는 계속 기억하고 있어야함.
 	}
 	else if(shmaddr[2]==SW1){
-		input = '.';
+		if(previous_sw==shmaddr[2]){
+			// input을 다음 문자로 바꿔준다.
+			switch(repeater%3){
+				case 0 :
+					input = '.';
+					break;
+				case 1 :
+					input = 'Q';
+					break;
+				case 2 :
+					input = 'Z';
+					break;
+			}
+			repeater++;	// repeater증가
+		}
+		else{
+			// input에 첫번째 대표문자를 넣어준다.
+			previous_sw = shmaddr[2];
+			repeater = 1;
+			input = '.';
+		}
+
 	}
 	else if(shmaddr[2]==SW2){
+		previous_sw = shmaddr[2];
+		repeater = 1;
 		input = 'A';
 	}
 	else if(shmaddr[2]==SW3){
+		previous_sw = shmaddr[2];
+		repeater = 1;
 		input = 'D';
 	}
 	else if(shmaddr[2]==SW4){
+		previous_sw = shmaddr[2];
+		repeater = 1;
 		input = 'G';
 	}
 	else if(shmaddr[2]==SW5){
