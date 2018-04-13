@@ -215,6 +215,7 @@ int mode3(char *shmaddr){
 		}
 		update_shm_mode3(shmaddr, string, 0, eng_num_flag,repeater,push_counter);
 		previous_sw = NO_SWITCH;
+		push_counter=push_counter+2;	// switch 2번 누른 것으로 카운트
 		repeater = 0;
 		return 0;
 	}
@@ -224,6 +225,7 @@ int mode3(char *shmaddr){
 		input=0;// input은 청소해야함.
 		update_shm_mode3(shmaddr, string, 0, eng_num_flag,repeater,push_counter); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
 		previous_sw = NO_SWITCH;
+		push_counter=push_counter+2;	// switch 2번 누른 것으로 카운트
 		repeater = 0;
 		return 0;
 	}
@@ -233,7 +235,7 @@ int mode3(char *shmaddr){
 		repeater = 1; // 공백도 처음 쓰는 것으로 판단
 		update_shm_mode3(shmaddr, string, input, eng_num_flag,repeater,push_counter);
 		previous_sw = NO_SWITCH;
-		push_counter++;	// 공백도 하나의 text 입력임
+		push_counter=push_counter+2;	// switch 2번 누른 것으로 카운트
 		repeater = 0;
 		return 0;
 	}

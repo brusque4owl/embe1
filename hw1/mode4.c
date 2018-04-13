@@ -229,6 +229,8 @@ int mode4(char *shmaddr){
 			break;		 
 	}// end of switch(shmaddr[2]) 분석
 
+	// switch가 2개 동시에 눌리면 카운트 막아줌(위에서 하나 더했으므로 여기서 하나 뺌)
+	if(shmaddr[3]!=0) fnd_counter--;
 // 2. 위에서 작성된 point_matrix를 바탕으로 dot_matrix 작성
 	int result;	// dot_matrix에 들어갈 값을 계산
 	for(i=0;i<10;i++){
