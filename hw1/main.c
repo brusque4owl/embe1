@@ -209,8 +209,8 @@ int main(){
 					i = 3;}
 				else{
 					i = 2;}
-				for(;i<5;i++)
-					shmaddr[i] = '\0';
+				//for(;i<5;i++)
+				//	shmaddr[i] = '\0';
 
 		// 5. print input process	
 				printf("input - mode = %d  mode_key = %d  switch1 = %d  switch2 = %d\n",shmaddr[0], shmaddr[1],shmaddr[2],shmaddr[3]);
@@ -262,7 +262,7 @@ int main(){
 							mode2(shmaddr);
 							break;
 						case MODE3 :
-							//delay(2);
+							delay(2);
 							mode3(shmaddr);
 							break;
 						case MODE4 :
