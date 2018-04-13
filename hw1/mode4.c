@@ -98,7 +98,6 @@ __inline void update_shm_mode4(char *shmaddr,int dot_matrix[10],bool cursor_blin
 
 int mode4(char *shmaddr){
 	int i,j;
-	static bool remember_before_blink=false;	// 깜빡임 모드에서 기존의 marked 값을 기억해야 깜빡임 이후에 복원
 	static int blink_counter = 0;
 	static bool cursor_blink = true;	// 커서 깜빡임 여부. 초기상태 : 깜빡임
 	static int  cursor_x = 0, cursor_y = 0;	// x is row number, y is col number
@@ -117,10 +116,22 @@ int mode4(char *shmaddr){
 		{0,0,0,0,0,0,0},
 		{0,0,0,0,0,0,0}
 	};
+	static bool copy_matrix[10][7] = {	// blink 모드에서 저장값이 1초마다 변하는 문제로 copy_matrix사용
+		{0,0,0,0,0,0,0}, // 10행 7열의 점 매트릭스 실물
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0}
+	};
+
 	if(fnd_counter==10000) fnd_counter=0;
 // 0. 모드 변경을 통해 mode4 진입시 초기화(커서 깜빡임, 커서 좌표 및 마킹 여부, fnd카운터, 모드4진입 카운터, 매트릭스)
 	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
-		remember_before_blink = false;
 		blink_counter = 0;
 		cursor_blink = true;
 		cursor_x = 0, cursor_y = 0;
@@ -128,8 +139,10 @@ int mode4(char *shmaddr){
 		fnd_counter = 0;
 		enter_mode4 = 0;
 		for(i=0;i<10;i++)
-			for(j=0;j<7;j++)
+			for(j=0;j<7;j++){
 				point_matrix[i][j]=0;
+				 copy_matrix[i][j]=0;
+			}
 		// for문 끝
 	}
 	//dot_matrix는 DOT_DEVICE에 작성할 때 사용
@@ -140,10 +153,11 @@ int mode4(char *shmaddr){
 		case RESET : // 1
 			// Initialize point_matrix
 			for(i=0;i<10;i++)
-				for(j=0;j<7;j++)
+				for(j=0;j<7;j++){
 					point_matrix[i][j]=0;
+					 copy_matrix[i][j]=0;
+				}
 			// Reset values
-			remember_before_blink = false;
 			cursor_blink = true;
 			cursor_x = 0; cursor_y = 0;
 			cursor_marked = 0;
@@ -158,8 +172,10 @@ int mode4(char *shmaddr){
 			// 그림만 clear하고 나머지 유지
 			// Initialize point_matrix
 			for(i=0;i<10;i++)
-				for(j=0;j<7;j++)
+				for(j=0;j<7;j++){
 					point_matrix[i][j]=0;
+					 copy_matrix[i][j]=0;
+				}
 			cursor_marked = 0;
 			fnd_counter++;
 			break;
@@ -169,33 +185,40 @@ int mode4(char *shmaddr){
 	// General keys
 		case SELECT ://SW5
 			// 현재 커서의 마킹값을 반전시킨 뒤 매트릭스에 저장
-			// blink 모드면 remember_before_blink에 값을 기억해두어야함.
-			if(cursor_blink==true)		remember_before_blink=point_matrix[cursor_x][cursor_y];
+			//     blink 모드면 copy_matrix에 값을 기억해두어야함.
+			// not blink 모드면 point_matrix에 바로 표시
+			if(cursor_blink==true)		 copy_matrix[cursor_x][cursor_y]= !copy_matrix[cursor_x][cursor_y];
+			else						point_matrix[cursor_x][cursor_y]=!point_matrix[cursor_x][cursor_y];
 			cursor_marked = !cursor_marked;
 			point_matrix[cursor_x][cursor_y] = cursor_marked;	// 저장
 			fnd_counter++;
 			break;
 		case UP : 	 //SW2
-			// blink 모드면 cursor 좌표 바꾸기 전에 remember_before_blink에서 값을 복원해주고 움직여야함
-			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = remember_before_blink;
+			//     blink 모드면 cursor 좌표 바꾸기 전에 copy_matrix에서 값을 복원해주고 움직여야함
+			// not blink 모드면 cursor 좌표 바꾸기 전에 copy_matrix로   값을 저장해주고 움직여야함
+			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = copy_matrix[cursor_x][cursor_y];
+			else						 copy_matrix[cursor_x][cursor_y] =point_matrix[cursor_x][cursor_y];
 			cursor_x--; if(cursor_x<0) cursor_x=0;
 			cursor_marked = point_matrix[cursor_x][cursor_y];	// 저장해 놓은 값을 가져옴
 			fnd_counter++;
 			break;
 		case DOWN :	 //SW8
-			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = remember_before_blink;
+			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = copy_matrix[cursor_x][cursor_y];
+			else						 copy_matrix[cursor_x][cursor_y] =point_matrix[cursor_x][cursor_y];
 			cursor_x++; if(cursor_x>9) cursor_x=9;
 			cursor_marked = point_matrix[cursor_x][cursor_y];
 			fnd_counter++;
 			break;
 		case LEFT :	 //SW4
-			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = remember_before_blink;
+			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = copy_matrix[cursor_x][cursor_y];
+			else						 copy_matrix[cursor_x][cursor_y] =point_matrix[cursor_x][cursor_y];
 			cursor_y--; if(cursor_y<0) cursor_y=0;
 			cursor_marked = point_matrix[cursor_x][cursor_y];
 			fnd_counter++;
 			break;
 		case RIGHT : //SW6
-			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = remember_before_blink;
+			if(cursor_blink==true)		point_matrix[cursor_x][cursor_y] = copy_matrix[cursor_x][cursor_y];
+			else						 copy_matrix[cursor_x][cursor_y] =point_matrix[cursor_x][cursor_y];
 			cursor_y++;	if(cursor_y>6) cursor_y=6;
 			cursor_marked = point_matrix[cursor_x][cursor_y];
 			fnd_counter++;
