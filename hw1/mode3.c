@@ -91,12 +91,14 @@ int mode3(char *shmaddr){
 	static char input=0; // 모드3오면 input을 NUL로 초기화/ 이후 변경내역 기역
 	static char string[MAX_BUFF+1];
 	static bool eng_num_flag=false;	// false : english | true : number
+	static int previous_sw=NO_SWITCH;
 	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
-		enter_mode3=0;	// 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열, 영수 플래그, 도트 매트릭스)
+		enter_mode3=0;	// 모드3 최초진입시 초기화(모드3진입 카운터, input 문자, string 문자열, 영수 플래그, 도트 매트릭스,이전 스위치)
 		input=0;
 		memset(string,0,sizeof(string));
 		eng_num_flag=false;
 		shmaddr[35]=0;	// 도트 매트리스에 사용할 플래그(0->eng / 1->num)
+		previous_sw = NO_SWITCH;
 	}
 	int i;
 
@@ -111,6 +113,7 @@ int mode3(char *shmaddr){
 			input=0;
 		}
 		update_shm_mode3(shmaddr, string, 0, eng_num_flag);
+		previous_sw = NO_SWITCH;
 		return 0;
 	}
 	// ENGLISH <-> NUMBER 작동 확인 필요
@@ -118,12 +121,14 @@ int mode3(char *shmaddr){
 		eng_num_flag=!eng_num_flag;	// flag 뒤집기
 		input=0;// input은 청소해야함.
 		update_shm_mode3(shmaddr, string, 0, eng_num_flag); // flag만 바꾸고 업데이트후 리턴. 다음 차례부터 바뀐모드로 입력받음
+		previous_sw = NO_SWITCH;
 		return 0;
 	}
 	// MAKE A SPACE 작동 확인
 	else if(shmaddr[2]==SW8 && shmaddr[3]==SW9){
 		input = ' '; // 공백==32
 		update_shm_mode3(shmaddr, string, input, eng_num_flag);
+		previous_sw = NO_SWITCH;
 		return 0;
 	}
 // 버튼 2개 눌리는 상황은 모두 아래까지 안내려오도록하고 리턴시켰음
