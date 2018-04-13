@@ -164,8 +164,10 @@ int mode4(char *shmaddr){
 			fnd_counter++;
 			break;
 		case CURSOR : // 커서 깜빡임 모드 변경
-			if(cursor_blink==true)	point_matrix[cursor_x][cursor_y] = copy_matrix[cursor_x][cursor_y];
-			else 					blink_counter = 0; // 초기화
+			if(cursor_blink==true)	point_matrix[cursor_x][cursor_y] = copy_matrix[cursor_x][cursor_y];// true->false copy를 가져나감
+			else{ 					blink_counter = 0; // 초기화
+									copy_matrix[cursor_x][cursor_y] = point_matrix[cursor_x][cursor_y];// false->true copy에 저장해놓음
+			}
 			cursor_blink = !cursor_blink; // flag반전. 나머지는 유지
 			fnd_counter++;
 			break;
@@ -180,12 +182,14 @@ int mode4(char *shmaddr){
 			cursor_marked = 0;
 			fnd_counter++;
 			break;
-		case REVERSE :	// 모든 dot를 반전시켜줌
+		case REVERSE :	// SW9 : 모든 dot를 반전시켜줌
 			for(i=0;i<10;i++)
 				for(j=0;j<7;j++){
 					point_matrix[i][j]=!copy_matrix[i][j]; // 반전 중인 경우 point_matrix가 변하니까 copy_matrix에서 가져옴
 					 copy_matrix[i][j]=!copy_matrix[i][j]; // copy_matrix자체도 반전시킨 값을 저장해줘야함.
 				}
+			cursor_marked = !cursor_marked; // 현재 커서도 marked 해제
+			point_matrix[cursor_x][cursor_y] = cursor_marked;	// 저장
 			fnd_counter++;
 			break;
 	// General keys
@@ -194,7 +198,9 @@ int mode4(char *shmaddr){
 			//     blink 모드면 copy_matrix에 값을 기억해두어야함.
 			// not blink 모드면 point_matrix에 바로 표시
 			if(cursor_blink==true)		 copy_matrix[cursor_x][cursor_y]= !copy_matrix[cursor_x][cursor_y];
-			else						point_matrix[cursor_x][cursor_y]=!point_matrix[cursor_x][cursor_y];
+			else{						point_matrix[cursor_x][cursor_y]=!point_matrix[cursor_x][cursor_y];
+										 copy_matrix[cursor_x][cursor_y]=!point_matrix[cursor_x][cursor_y]; // REVERSE때문
+			}
 			cursor_marked = !cursor_marked;
 			point_matrix[cursor_x][cursor_y] = cursor_marked;	// 저장
 			fnd_counter++;
