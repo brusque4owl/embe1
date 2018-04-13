@@ -132,10 +132,10 @@ int mode4(char *shmaddr){
 // shmaddr으로 들어온 스위치를 분석하여 작업 수행(커서이동, 선택(마킹), 리셋, 깜빡임변경, clear, 반전)
 	switch(shmaddr[2]){
 	// Special keys
-		case RESET :
+		case RESET : // 1
 			// Initialize point_matrix
-			for(i=0;i<7;i++)
-				for(j=0;j<10;j++)
+			for(i=0;i<10;i++)
+				for(j=0;j<7;j++)
 					point_matrix[i][j]=0;
 			// Reset values
 			cursor_blink = true;
@@ -147,11 +147,11 @@ int mode4(char *shmaddr){
 			cursor_blink = !cursor_blink; // flag반전. 나머지는 유지
 			fnd_counter++;
 			break;
-		case CLEAR :
+		case CLEAR : // 7
 			// 그림만 clear하고 나머지 유지
 			// Initialize point_matrix
-			for(i=0;i<7;i++)
-				for(j=0;j<10;j++)
+			for(i=0;i<10;i++)
+				for(j=0;j<7;j++)
 					point_matrix[i][j]=0;
 			fnd_counter++;
 			break;
@@ -159,7 +159,7 @@ int mode4(char *shmaddr){
 			fnd_counter++;
 			break;
 	// General keys
-		case SELECT :
+		case SELECT ://SW5
 			// 현재 커서의 마킹값을 반전시킨 뒤 매트릭스에 저장
 			cursor_marked = !cursor_marked;
 			point_matrix[cursor_x][cursor_y] = cursor_marked;	// 저장
