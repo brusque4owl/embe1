@@ -47,6 +47,13 @@
 #define VOL_PLUS 115
 #define VOL_MINUS 114
 
-int mode4(char *shmaddr){
+int power(int exp){
+	int i,result=1;
+	for(i=0;i<exp;i++)
+		result = result*2;
+	return result;
+}
 
+int mode4(char *shmaddr){
+	return 0;
 }

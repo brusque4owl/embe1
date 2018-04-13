@@ -403,7 +403,63 @@ int main(){
 						case 4 : // draw board mode
 				// shmaddr 변경한게 반영 안되는 문제 발생시 아래쪽 clear shared memory 확인
 							printf("change mode to 4 : draw board\n");
+				// DOT_DEVICE 작성 with  CURSOR FLAG 처리(true면 1초마다 blink, false면 계속 출력상태)
+							static int blink_counter=0;
+							unsigned char dot_arr[10];	// DOT_DEVICE에 쓸 때 사용
+							if(shmaddr[19]==1) blink_counter=0;	// 모드 최초진입시 counter 초기화
+						// blink처리하여 DOT_DEVICE에 출력		
+							if(shmaddr[11]==1){	// blink 처리 : 이게 기본 모드
+								//delay(1);
+								static int flag_blink_cursor=0;
+								clock_t blink_time; // 깜빡이기 시작한 시간
+								if(flag_blink_cursor==0){// 여기는 시간 측정 시작때만 들어옴
+									blink_time=clock(); // 시간 측정 시작
+									flag_blink_cursor = 1;
+								}
+								clock_t elapsed_time = clock(); // 시간 경과 체크
+								if(elapsed_time - blink_time>CLOCKS_PER_SEC){ // 측정 후 1초 지남
+									flag_blink_cursor = 0;	//초기화해야 다시 시작 시간 측정
+									// matrix업데이트 필요
+									//1. y로 row 찾기(shmaddr[13])
+									//2. x로 col 반전한 값을 matrix에 업데이트(shmaddr[12])
+									int x,y,cursor_value;
+									x=shmaddr[12]; y=shmaddr[13]; cursor_value=shmaddr[14];
+									if(cursor_value==1){	// 해당 점에 불들어와있으니까 값을 빼줘야함
+										if(blink_counter%2==0) shmaddr[y] -= power(6-x);
+										// 빼주기만 하면됨. 다음 count때에는 가만히 놔두면 원래값 출력해서 불켜짐
+										blink_counter++;
+									}
+									else{//cursor_value==0  // 해당 점에 불꺼져있으니까 값을 더해줘야함
+										if(blink_counter%2==0) shmaddr[y] += power(6-x);
+										blink_counter++;
+									}
+									// DOT_DEVICE에 출력
+									for(i=0;i<10;i++)	// shmaddr -> dot_arr로 복사
+										dot_arr[i]=shmaddr[i+1];
+									str_size = sizeof(dot_arr);
+									write(fd_dot,dot_arr,str_size);
+								}
+							}// end of if(blink처리)
+						// blink없이 DOT_DEVICE에 출렦
+							else{	// blink없음 --- shmaddr에서 받은거 그대로 출력
+								blink_counter=0;	// blink 끝나면 counter 초기화
+								for(i=0;i<10;i++)	// shmaddr -> dot_arr로 복사
+									dot_arr[i]=shmaddr[i+1];
+								str_size = sizeof(dot_arr);
+								write(fd_dot,dot_arr,str_size);
+							}// end of else(계속 출력)
+
+				// FND_DEVICE 작성
+							for(i=15;i<19;i++){
+								buf[i-15]=shmaddr[i];}
+							buf[4]='\0';
+							retval = write(fd_fnd, &buf, 4);
+							if(retval<0){
+								printf("Write Error!\n");
+								return -1;
+							}
 							break;
+// ERROR! NON EXISTED MODE!
 						default :
 							printf("Error on calculating mode number\n");
 							break;
