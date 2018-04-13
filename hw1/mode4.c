@@ -98,7 +98,7 @@ __inline void update_shm_mode4(char *shmaddr,int dot_matrix[10],bool cursor_blin
 int mode4(char *shmaddr){
 	int i,j;
 	static bool cursor_blink = true;	// 커서 깜빡임 여부. 초기상태 : 깜빡임
-	static int  cursor_x = 0, cursor_y = 0;
+	static int  cursor_x = 0, cursor_y = 0;	// x is row number, y is col number
 	static bool cursor_marked = 0;
 	static int  fnd_counter = 0;
 	static int  enter_mode4 = 0;	// blink_counter와 연동됨
@@ -162,27 +162,26 @@ int mode4(char *shmaddr){
 		case SELECT :
 			// 현재 커서의 마킹값을 반전시킨 뒤 매트릭스에 저장
 			cursor_marked = !cursor_marked;
-			// [cursor_x][cursor_y]가 아님에 주의. point_matrix는 [10][7]이고 각각 y값, x값을 나타낸다.
-			point_matrix[cursor_y][cursor_x] = cursor_marked;	
+			point_matrix[cursor_x][cursor_y] = cursor_marked;	
 			fnd_counter++;
 			break;
 		case UP : 	 //SW2
-			cursor_y--; if(cursor_y<0) cursor_y=0;
+			cursor_x--; if(cursor_x<0) cursor_x=0;
 			cursor_marked = 0;	// 위치 바꾸면 마킹 여부 초기화
 			fnd_counter++;
 			break;
 		case DOWN :	 //SW8
-			cursor_y++; if(cursor_y>9) cursor_y=9;
+			cursor_x++; if(cursor_x>9) cursor_x=9;
 			cursor_marked = 0;
 			fnd_counter++;
 			break;
 		case LEFT :	 //SW4
-			cursor_x--; if(cursor_x<0) cursor_x=0;
+			cursor_y--; if(cursor_y<0) cursor_y=0;
 			cursor_marked = 0;
 			fnd_counter++;
 			break;
 		case RIGHT : //SW6
-			cursor_x++;	if(cursor_x>6) cursor_x=6;
+			cursor_y++;	if(cursor_y>6) cursor_y=6;
 			cursor_marked = 0;
 			fnd_counter++;
 			break;
