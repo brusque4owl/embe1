@@ -183,8 +183,8 @@ int mode4(char *shmaddr){
 		case REVERSE :	// 모든 dot를 반전시켜줌
 			for(i=0;i<10;i++)
 				for(j=0;j<7;j++){
-					point_matrix[i][j]=!point_matrix[i][j];
-					 copy_matrix[i][j]= !copy_matrix[i][j];
+					point_matrix[i][j]=!copy_matrix[i][j]; // 반전 중인 경우 point_matrix가 변하니까 copy_matrix에서 가져옴
+					 copy_matrix[i][j]=!copy_matrix[i][j]; // copy_matrix자체도 반전시킨 값을 저장해줘야함.
 				}
 			fnd_counter++;
 			break;
