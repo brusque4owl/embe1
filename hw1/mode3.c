@@ -179,6 +179,7 @@ __inline void update_shm_mode3(char *shmaddr, char *string, char input, bool fla
 		}
 	}
 }
+
 int mode3(char *shmaddr){
 	static int enter_mode3=0;
 	static char input=0; // 모드3오면 input을 NUL로 초기화/ 이후 변경내역 기역
