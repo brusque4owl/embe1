@@ -252,7 +252,7 @@ unsigned char mode_sign_matrix[5][10] = {
 
 // 3. Update shared memory
 	update_shm_mode5(shmaddr, dot_mat_num, problem_msg, example_msg, answer_counter,mode_sign_matrix,saying,show_example);
-	if(select==1 || select==2){ // 보기 1번 또는 2번 선택 -> 다음문제로 넘어가도록 문제번호 업데이트
+	if(select==1 || select==2 || select==6){ // 보기 1번 또는 2번 선택 -> 다음문제로 넘어가도록 문제번호 업데이트
 		question_number[game_mode]++; 
 		if(question_number[game_mode]>9) question_number[game_mode] = 0;
 		show_example = false; // 속담 모드에서는 이걸 풀어줘야 다음문제에서 바로 문제가 나옴
