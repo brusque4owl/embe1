@@ -276,6 +276,5 @@ int mode4(char *shmaddr){
 // 3. UPDATE SHARED MEMORY
 	update_shm_mode4(shmaddr, dot_matrix, cursor_blink, cursor_x, cursor_y, cursor_marked, fnd_counter, enter_mode4);
 	enter_mode4++;
-	printf("cursor_blink = %d\t cursor_x = %d / cursor_y = %d\ncursor_marked = %d\t enter_mode4 = %d\n",cursor_blink,cursor_x,cursor_y,cursor_marked, enter_mode4);
 	return 0;
 }

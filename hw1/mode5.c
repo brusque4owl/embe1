@@ -128,15 +128,6 @@ char problem[3][10][33] = {
 	{/*1*/{"Do not judge a ( ) by its cover"},/*2*/{"Too many ( ) spoil the broth"},/*3*/{"Many hands make ( ) work"},/*4*/{"There is no place like ( )"},/*5*/{"Easy ( ), easy go"},/*6*/{"( ) is the best policy"},/*7*/{"( ) makes perfect"},/*8*/{"The more, the ( )"},/*9*/{"( ) before you leap"},/*10*/{"The early bird catches the ( )"}}
 };
 
-int solution[3][10] = {	// SW1의 값과 직접 비교하기 때문에 1 또는 2로 판단
-// mode1 - Capital
-	{1,2,2,1,2,2,1,2,1,2},
-// mode2 - Calculation
-	{2,1,1,1,1,2,1,2,1,1},
-// mode3 - Sayings
-	{1,2,2,1,2,2,1,2,1,1}
-};
-
 char example[3][10][17] = {	// nul 문자 제외하고 16문자로 맞춤
 // mode1 - Capital
 	{ /*1*/{"Seoul / Pusan"}, /*2*/{"Oslo / Budapest"}, /*3*/{"Paris / Beijing"}, /*4*/{"Ottawa / Rome"}, /*5*/{"Rio / Brasilia"}, /*6*/{"Kyoto / Tokyo"}, /*7*/{"Algiers / Cairo"}, /*8*/{"Dili / Canberra"}, /*9*/{"London / LA"}, /*10*/{"Paris / Athens"} },
@@ -144,6 +135,16 @@ char example[3][10][17] = {	// nul 문자 제외하고 16문자로 맞춤
 	{ /*1*/{"4 / 5"}, /*2*/{"27 / 28"}, /*3*/{"17 / 18"}, /*4*/{"12 / 13"}, /*5*/{"2 / 12"}, /*6*/{"7 / 8"}, /*7*/{"50 / 24"}, /*8*/{"9 / 0"}, /*9*/{"40 / 1"}, /*10*/{"15 / 16"} },
 // mode3 - Syaings
 	{ /*1*/{"book / cook"}, /*2*/{"books / cooks"}, /*3*/{"heavy / light"}, /*4*/{"home / house"}, /*5*/{"get / come"}, /*6*/{"Be / Honesty"}, /*7*/{"Practice / Get"}, /*8*/{"bitter / better"}, /*9*/{"Look / Watch"}, /*10*/{"worm / warm"} }
+};
+
+
+int solution[3][10] = {	// SW1의 값과 직접 비교하기 때문에 1 또는 2로 판단
+// mode1 - Capital
+	{1,2,2,1,2,2,1,2,1,2},
+// mode2 - Calculation
+	{2,1,1,1,1,2,1,2,1,1},
+// mode3 - Sayings
+	{1,2,2,1,2,2,1,2,1,1}
 };
 
 

@@ -221,11 +221,6 @@ int main(){
 					i = 3;}
 				else{
 					i = 2;}
-				//for(;i<5;i++)
-				//	shmaddr[i] = '\0';
-
-		// 5. print input process	
-				printf("input - mode = %d  mode_key = %d  switch1 = %d  switch2 = %d\n",shmaddr[0], shmaddr[1],shmaddr[2],shmaddr[3]);
 			semunlock(sem_main);
 		}
 	}// end of fork-if
@@ -290,14 +285,11 @@ int main(){
 							printf("mode value is wrong. check INPUT PROCESS or MAIN PROCESS\n");
 							break;
 					}// end of switch(mode)
-					//printf("main - mode = %d\thour[%d%d] minute[%d%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
-					//printf("main - mode = %d\tresult = [%d][%d][%d][%d]\n",shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4]);
-					//printf("shmaddr[6] = %d\n", shmaddr[6]);
 				semunlock(sem_output);
 				main_counter++;
 			}
 			//return 0;
-		}
+		}//end of if(pid) - MAIN_PROCESS
 // OUTPUT PROCESS - child 2 ----------------------------------------------------------------------------------------------------
 		else{	
 			int retval;	// check for write
@@ -318,20 +310,6 @@ int main(){
 								printf("Write Error!\n");
 								return -1;
 							}
-							/*기존코드
-							if(shmaddr[6]==1){	// 수정모드 : 3번:2^5 / 4번:2^4
-								delay(5);
-								*led_addr = 32;
-								delay(5);
-								*led_addr = 16;
-							}
-							else{				// 저장모드 : 1번:2^7
-								delay(1);	// 이게 없으면 위에서 delay두번으로 인해 SW1이 짝수로만 눌리게됨
-								*led_addr = 128;
-							}
-							*/ //기존코드 끝
-							
-							/// 실험 코드 시작
 							if(shmaddr[6]==1){	// 수정모드
 								delay(1);	// 이게 없으면 SW1이 짝수로만 눌림
 								static int flag_blink=0;
@@ -353,9 +331,8 @@ int main(){
 								delay(1);	// 이게 없으면 SW1이 짝수로만 눌림
 								*led_addr = 128;
 							}
-							/// 실험 코드 끝
-							
-							break;
+							break;	// END OF CASE 1
+
 // COUNTER MODE : WRITE to FND_DEVICE and LED_DEVICE
 						case 2 : // counter mode
 							printf("change mode to 2 : counter\n");
@@ -387,7 +364,8 @@ int main(){
 									printf("shmaddr[6] means the base. So check the base in mode2().\n");
 									break;
 							}
-							break;
+							break;	// END OF CASE 2
+
 // TEXT EDITOR MODE : WRITE to FND_DEVICE, LCD_DEVICE and DOT_DEVICE
 						case 3 : // text editor mode
 							printf("change mode to 3 : text editor\n");
@@ -418,7 +396,8 @@ int main(){
 								printf("Write Error!\n");
 								return -1;
 							}
-							break;
+							break;	// END OF CASE 3
+
 // DRAW BOARD MODE : WRITE to FND_DEVICE, DOT_DEVICE
 						case 4 : // draw board mode
 				// shmaddr 변경한게 반영 안되는 문제 발생시 아래쪽 clear shared memory 확인
@@ -439,9 +418,7 @@ int main(){
 								printf("Write Error!\n");
 								return -1;
 							}
-							break;
-
-
+							break;	// END OF CASE4
 
 // QUIZ GAME MODE : WRITE to DOT_DEVICE, LCD_DEVICE, FND_DEVICE, BUZZER_DEVICE
 						case 5 : // quiz game
@@ -533,28 +510,20 @@ int main(){
 								}
 								delay(10);
 							}
-							break;	// END OF MODE5
+							break;	// END OF CASE 5
 
 // ERROR! NON EXISTED MODE!
 						default :
 							printf("Error on calculating mode number\n");
 							break;
-					}// END OF SWITCH
-
-					printf("output - mode = %d\nlcd_up   = [%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c]\nlcd_down = [%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c]\n",
-							shmaddr[0],
-							shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4],shmaddr[5],shmaddr[6],shmaddr[7],shmaddr[8],
-							shmaddr[9],shmaddr[10],shmaddr[11],shmaddr[12],shmaddr[13],shmaddr[14],shmaddr[15],shmaddr[16],
-							shmaddr[17],shmaddr[18],shmaddr[19],shmaddr[20],shmaddr[21],shmaddr[22],shmaddr[23],shmaddr[24],
-							shmaddr[25],shmaddr[26],shmaddr[27],shmaddr[28],shmaddr[29],shmaddr[30],shmaddr[31],shmaddr[32]);
-			
+					}// END OF SWITCH(mode분석 및 MAIN PROCESS에서 넘어온 shmaddr 결과를 보드에 출력)
 			// clear shared memory
 					for(i=0;i<SHM_SIZE;i++){
 						shmaddr[i]='\0';
 					}
 				semunlock(sem_input);
 				
-			}
-		}
+			}// end of while(1) - OUTPUT PROCESS
+		}// end of else(pid) - OUTPUT PROCESS
 	}// end of fork-else
-}
+}// end of main()

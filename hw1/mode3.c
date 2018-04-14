@@ -453,8 +453,6 @@ else{//숫자 쓰기
 }// end of else 숫자 쓰기
 	update_shm_mode3(shmaddr,string,input,eng_num_flag,repeater,push_counter);
 	enter_mode3++;
-	printf("@@@@@enter_mode3 = %d\n",enter_mode3);
-	printf("-----push_counter = %d\n",push_counter);
 	return 0;
 }//END OF mode3()
 
