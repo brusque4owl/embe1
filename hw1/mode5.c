@@ -14,7 +14,6 @@
 #include <string.h>
 
 #include "mode5.h"
-
 /*-------- DOT MATRIX에서 주의할점 ----------------------------
 |	DOT MATRIX의 경우 y축이 뒤집어져있다.					  |
 |	즉 DOWN 스위치를 누르면 Y값이 감소하지 않고 증가한다.	  |
@@ -36,19 +35,59 @@
 #define MODE0	0
 #define MODE1	1
 #define MODE2	2
+#define CORRECT 3
+#define WRONG	4
 
 #define CAPITAL 0 // 수도 문제
-#define SAYING  1 // 속담 문제
-#define CALC    2 // 산수 문제
+#define CALC    1 // 산수 문제
+#define SAYING  2 // 속담 문제
 
 #define VOL_PLUS 115
 #define VOL_MINUS 114
 
 #define CLOCK_PER_SEC 100000
 
-__inline void update_shm_mode5(char *shmaddr,int game_mode, int dot_mat_num, /*LCD 변수(상하 2개)*/
-								char *problem_msg, int answer_counter){
-	// 파라미터 생각해서 조정하기
+__inline void update_shm_mode5(char *shmaddr,int dot_mat_num, /*LCD 변수(상하 2개)*/
+								char *problem_msg, char *example_msg, int fnd_counter, unsigned char mode_sign_matrix[][10]){
+	/*shmaddr[1~10]  : dot matrix
+	  shmaddr[11~42] : LCD text
+	  shmaddr[43~46] : FNd counter
+	  shmaddr[47]    : Buzzer flag
+	 */
+	int i;
+	// 1. Process dot matrix
+	for(i=1;i<=10;i++)
+		shmaddr[i] = mode_sign_matrix[dot_mat_num][i-1];
+	
+	// 2. Process LCD text
+	for(i=11;i<=26;i++)
+		shmaddr[i] = problem_msg[i-11];
+	for(i=27;i<=42;i++)
+		shmaddr[i] = example_msg[i-27];
+
+	// 3. Process answer counter on FND
+	i=0;
+	if(fnd_counter>9999) fnd_counter=0; // 9999를 넘어가면 0으로 초기화
+	do{
+		shmaddr[46-i]=fnd_counter%10;
+		fnd_counter = fnd_counter/10;
+		i++;
+	}while(fnd_counter!=0);
+	//여기 도착하면 i는 counter의 자리수와 같아짐
+	switch(i){
+		case 1 :	// 3자리 남음
+			shmaddr[45]=0;
+		case 2 : 	// 2자리 남음
+			shmaddr[44]=0;
+		case 3 :	// 1자리 남음
+			shmaddr[43]=0;
+			break;
+		default :	// i==4이면 이미 자리수 모두 사용
+			break;
+	}
+
+	// 4. Process Buzzer flag
+	if(dot_mat_num==WRONG) shmaddr[47] = 1;
 }
 
 // Global variables - When fpga mode(not game mode) is changed, these must be initialized.
@@ -57,7 +96,62 @@ int question_number[3] = {0,};  // Question number for each game mode. Range is 
 int answer_counter = 0;
 int enter_mode5 = 0;
 
+///////////////////////////////////////////////////////////////////////////////////////////
 int mode5(char *shmaddr){
+
+// Array for problem set, example set, solution set
+char problem[2][10][17] = {
+// mode1
+	{/*1*/{"KOREA"},/*2*/{"HUNGARY"},/*3*/{"CHINA"},/*4*/{"CANADA"},/*5*/{"BRAZIL"},/*6*/{"JAPAN"},/*7*/{"ALGERIA"},/*8*/{"AUSTRALIA"},/*9*/{"UK"},/*10*/{"GREECE"}},
+// mode2
+	{/*1*/{"2+3"},/*2*/{"3*9"},/*3*/{"1+2*8"},/*4*/{"2*2+8"},/*5*/{"3*2-1*4"},/*6*/{"4/2*3+2"},/*7*/{"9*6-8/2"},/*8*/{"0+3*0"},/*9*/{"10/2*8"},/*10*/{"1+2+3+4+5"}}
+// mode1
+//	{/*1*/{"KOREA           "},/*2*/{"HUNGARY         "},/*3*/{"CHINA           "},/*4*/{"CANADA          "},/*5*/{"BRAZIL          "},/*6*/{"JAPAN           "},/*7*/{"ALGERIA         "},/*8*/{"AUSTRALIA       "},/*9*/{"UK              "},/*10*/{"GREECE          "}},
+// mode2
+//	{/*1*/{"2+3             "},/*2*/{"3*9             "},/*3*/{"1+2*8           "},/*4*/{"2*2+8           "},/*5*/{"3*2-1*4"},/*6*/{"4 / 2 * 3 + 2"},/*7*/{"9 * 6 - 8 / 2"},/*8*/{"0 + 3 * 0"},/*9*/{"10 / 2 * 8"},/*10*/{"1 + 2 + 3 + 4 + 5"}}
+};
+
+//char saying[1][10][33] = {
+// mode3
+//	{/*1*/{"Don’t judge a ( ) by its cover"},/*2*/{"Too many ( ) spoil the broth"},/*3*/{"Many hands make ( ) work"},/*4*/{"There is no place like ( )"},/*5*/{"Easy ( ), easy go"},/*6*/{"( ) is the best policy"},/*7*/{"( ) makes perfect"},/*8*/{"The more, the ( )"},/*9*/{"( ) before you leap"},/*10*/{"The early bird catches the ( )"}}
+//};
+
+int solution[3][10] = {	// SW1의 값과 직접 비교하기 때문에 1 또는 2로 판단
+// mode1 - Capital
+	{1,2,2,1,2,2,1,2,1,2},
+// mode2 - Sayings
+	{1,2,2,1,2,2,1,2,1,1},
+// mode3 - Calculation
+	{2,1,1,1,1,2,1,2,1,1}
+};
+
+char example[3][10][17] = {	// nul 문자 제외하고 16문자로 맞춤
+// mode1 - Capital
+	{ /*1*/{"Seoul / Pusan"}, /*2*/{"Oslo / Budapest"}, /*3*/{"Oslo / Beijing"}, /*4*/{"Ottawa / Rome"}, /*5*/{"Rio / Brasilia"}, /*6*/{"Kyoto / Tokyo"}, /*7*/{"Algiers / Cairo"}, /*8*/{"Dili / Canberra"}, /*9*/{"London / LA"}, /*10*/{"Paris / Athens"} },
+// mode2 - Calculation
+	{ /*1*/{"4 / 5"}, /*2*/{"27 / 28"}, /*3*/{"17 / 18"}, /*4*/{"12 / 13"}, /*5*/{"2 / 12"}, /*6*/{"7 / 8"}, /*7*/{"50 / 24"}, /*8*/{"9 / 0"}, /*9*/{"40 / 1"}, /*10*/{"15 / 16"} },
+// mode3 - Syaings
+	{ /*1*/{"book / cook"}, /*2*/{"books / cooks"}, /*3*/{"heavy / light"}, /*4*/{"home / house"}, /*5*/{"get / come"}, /*6*/{"Be / Honesty"}, /*7*/{"Practice / Get"}, /*8*/{"bitter / better"}, /*9*/{"Look / Watch"}, /*10*/{"worm / warm"} }
+// mode1 - Capital
+//	{ /*1*/{"Seoul / Pusan   "}, /*2*/{"Oslo / Budapest"}, /*3*/{"Oslo / Beijing  "}, /*4*/{"Ottawa / Rome   "}, /*5*/{"Rio / Brasilia  "}, /*6*/{"Kyoto / Tokyo   "}, /*7*/{"Algiers / Cairo "}, /*8*/{"Dili / Canberra "}, /*9*/{"London / LA    "}, /*10*/{"Paris / Athens  "} },
+// mode2 - Calculation
+//	{ /*1*/{"4 / 5           "}, /*2*/{"27 / 28         "}, /*3*/{"17 / 18         "}, /*4*/{"12 / 13         "}, /*5*/{"2 / 12          "}, /*6*/{"7 / 8           "}, /*7*/{"50 / 24         "}, /*8*/{"9 / 0           "}, /*9*/{"40 / 1          "}, /*10*/{"15 / 16         "} },
+// mode3 - Syaings
+//	{ /*1*/{"book / cook     "}, /*2*/{"books / cooks   "}, /*3*/{"heavy / light   "}, /*4*/{"home / house   "}, /*5*/{"get / come      "}, /*6*/{"Be / Honesty    "}, /*7*/{"Practice / Get  "}, /*8*/{"bitter / better "}, /*9*/{"Look / Watch    "}, /*10*/{"worm / warm     "} }
+};
+
+
+// Dot matrix values for Game mode & O,X sign
+unsigned char mode_sign_matrix[5][10] = {
+	{0x0c,0x1c,0x1c,0x0c,0x0c,0x0c,0x0c,0x0c,0x0c,0x1e}, // mode 1
+	{0x7e,0x7f,0x03,0x03,0x3f,0x7e,0x60,0x60,0x7f,0x7f}, // mode 2
+	{0xfe,0x7f,0x03,0x03,0x7f,0x7f,0x03,0x03,0x7f,0x7e}, // mode 3
+	{0x3e,0x7f,0x63,0x63,0x63,0x63,0x63,0x63,0x7f,0x3e}, // sign O
+	{0x41,0x41,0x22,0x14,0x08,0x08,0x14,0x22,0x41,0x41}  // sign X
+};
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 	int i;
 	int select;	// 선택한 보기
 	// Initialize global variables when comes from other mode(mode1 or mode4)
@@ -101,7 +195,7 @@ int mode5(char *shmaddr){
 	}// end of switch for analyzing first switch
 // 2. Process things - Judge the answer by 'select'
 	// 1) Dot matrix 정하기											-- dot_mat_num 처리
-	int dot_mat_num;
+	int dot_mat_num;	// OX표시는 아래 정답처리 부분에서 덮어쓰기로 처리
 	switch(game_mode){
 		case MODE0 :
 			dot_mat_num = MODE0;
@@ -113,9 +207,12 @@ int mode5(char *shmaddr){
 			dot_mat_num = MODE2;
 			break;
 	}// end of switch(game_mode)
-	// 2) 문제 출제(정답 입력 전까지 그 LCD에 내용을 유지해야함		--  problem_msg 처리
-	char problem_msg[33];
+	// 2) 문제 및 보기 출제(정답 입력 전까지 그 LCD에 내용을 유지해야함		--  problem_msg 처리
+	char problem_msg[17];		// 수도와 산수 문제용
+	//char problem_msg_long[33];	// 속담 문제용
+	char example_msg[17];
 	strcpy(problem_msg, problem[game_mode][question_number[game_mode]]);
+	strcpy(example_msg, example[game_mode][question_number[game_mode]]);
 	// 3) 정답 처리(NO_SWITCH 포함 사용하지 않는 키 걸러내야함)		--  answer_counter 처리
 	bool correct;
 	if(select == SW1 || select == SW2){	// SW1, SW2에 대해서만 정답처리
@@ -124,8 +221,11 @@ int mode5(char *shmaddr){
 		else correct = false;
 		if(correct){ 
 			answer_counter++;
-			if(answer_counter>99) answer_counter=0;
+			dot_mat_num = CORRECT;
 		}// end of if(정답인 경우)
+		else{
+			dot_mat_num = WRONG;
+		}// end of else(오답인 경우)
 	}
 	else{	// SW3,SW4, SW5(RESET) SW6(SKIP), SW7, SW8, SW9(CHANGE), NO_SWITCH
 		// 다른 키
@@ -135,7 +235,7 @@ int mode5(char *shmaddr){
 	}
 
 // 3. Update shared memory
-	update_shm_mode5(shmaddr, game_mode, dot_mat_num, problem_msg, answer_counter);
+	update_shm_mode5(shmaddr, dot_mat_num, problem_msg, example_msg, answer_counter,mode_sign_matrix);
 	if(select==1 || select==2){ // 보기 1번 또는 2번 선택 -> 다음문제로 넘어가도록 문제번호 업데이트
 		question_number[game_mode]++; 
 		if(question_number[game_mode]>9) question_number[game_mode] = 0;

@@ -25,6 +25,7 @@
 #include "mode2.h"
 #include "mode3.h"
 #include "mode4.h"
+#include "mode5.h"
 #include "dot_font.h"
 
 #define SHM_SIZE 1024
@@ -37,6 +38,7 @@
 #define MODE2 2
 #define MODE3 3
 #define MODE4 4
+#define MODE5 5
 
 #define FND_DEVICE "/dev/fpga_fnd"
 #define KEY_DEVICE "/dev/input/event0"
@@ -45,9 +47,11 @@
 #define LED_ADDR 0x16
 #define LCD_DEVICE "/dev/fpga_text_lcd"
 #define DOT_DEVICE "/dev/fpga_dot"
+#define BUZ_DEVICE "/dev/fpga_buzzer"
 
 #define MAX_BUTTON 9	// for switch
 #define MAX_BUFF 32
+#define LINE_BUFF 16
 
 #define CLOCK_PER_SEC 100000	// CLOCKS_PER_SEC in <time.h> is 1000000
 __inline void delay(clock_t second){
@@ -58,6 +62,7 @@ __inline void delay(clock_t second){
 int main(){
 // prepare variables
 	char buf[SHM_SIZE];		// shared memory buffer
+	char buf2[SHM_SIZE];
 	int mode=1;	// 초기모드 #1(clock)
 	int i;
 
@@ -73,7 +78,7 @@ int main(){
 	int pushed_switch[2];		// 몇번 스위치가 눌렸는지 기억
 
 // prepare DEVICES open
-	int fd_key, fd_switch, fd_fnd, fd_led, fd_lcd, fd_dot;
+	int fd_key, fd_switch, fd_fnd, fd_led, fd_lcd, fd_dot, fd_buz;
 // open key device, switch device
 	if((fd_key = open(KEY_DEVICE, O_RDONLY|O_NONBLOCK))==-1){
 		printf("%s is not a valid device\n", KEY_DEVICE);
@@ -119,6 +124,13 @@ int main(){
 	fd_dot = open(DOT_DEVICE, O_WRONLY);
 	if(fd_dot<0){
 		printf("Device open error : %s\n", DOT_DEVICE);
+		return -1;
+	}
+
+// open BUZ_DEVICE
+	fd_buz = open(BUZ_DEVICE, O_WRONLY);
+	if(fd_buz<0){
+		printf("Device open error : %s\n", BUZ_DEVICE);
 		return -1;
 	}
 
@@ -237,18 +249,19 @@ int main(){
 							close(fd_fnd);
 							close(fd_led);
 							close(fd_lcd);
+							close(fd_buz);
 							return 0;
 							break;
 						case VOL_PLUS : // add mode number
 							mode = shmaddr[0];
 							mode = mode + 1;
-							if(mode>4) mode = 1;
+							if(mode>5) mode = 1;
 							shmaddr[0] = mode;
 							break;
 						case VOL_MINUS : // subtract mode number
 							mode = shmaddr[0];
 							mode = mode - 1;
-							if(mode<1) mode = 4;
+							if(mode<1) mode = 5;
 							shmaddr[0] = mode;
 							break;
 					}// end of switch(shmaddr[1])
@@ -269,6 +282,9 @@ int main(){
 							delay(2);
 							mode4(shmaddr);
 							break;
+						case MODE5 : 
+							delay(2);
+							mode5(shmaddr);
 						default :	// 이런 경우는 없음
 							printf("mode value is wrong. check INPUT PROCESS or MAIN PROCESS\n");
 							break;
@@ -402,10 +418,6 @@ int main(){
 								return -1;
 							}
 							break;
-
-
-
-
 // DRAW BOARD MODE : WRITE to FND_DEVICE, DOT_DEVICE
 						case 4 : // draw board mode
 				// shmaddr 변경한게 반영 안되는 문제 발생시 아래쪽 clear shared memory 확인
@@ -427,15 +439,93 @@ int main(){
 								return -1;
 							}
 							break;
+
+
+
+// QUIZ GAME MODE : WRITE to DOT_DEVICE, LCD_DEVICE, FND_DEVICE, BUZZER_DEVICE
+						case 5 : // quiz game
+				// shmaddr 변경한게 반영 안되는 문제 발생시 아래쪽 clear shared memory 확인
+							printf("change mode to 5 : quiz mode\n");
+				// DOT_DEVICE 작성 
+							unsigned char dot_temp[10];	// DOT_DEVICE에 쓸 때 사용
+							for(i=0;i<10;i++)	// shmaddr -> dot_arr로 복사
+								dot_temp[i]=shmaddr[i+1];
+							str_size = sizeof(dot_temp);
+							write(fd_dot,dot_temp,str_size);
+				// LCD_DEVICE
+							//buffer를 이용하여 shmaddr[0]에 적힌 모드부분 제거
+							for(i=0;i<=MAX_BUFF;i++){ //buffer 청소
+								buf[i]=0;
+								buf2[i]=0;
+							}
+							for(i=0;i<17;i++){
+								buf[i] = shmaddr[i+11];
+								printf("%c",buf[i]); 	// 문제 해결- MAIN PROCESS에서 mode1 최초진입 아닐때 shmaddr[5]='\0'했길래 수정
+							}
+							printf("\n");
+							for(i=0;i<17;i++){
+								buf2[i] = shmaddr[i+27];
+								printf("%c",buf[i]);
+							}
+							printf("\n");
+							// LCD 작성 시작
+							char buf_final[33];
+							memset(buf_final,0,sizeof(buf_final));
+							str_size = strlen(buf);
+							if(str_size>0){
+								strncat(buf_final,buf,str_size);
+								memset(buf_final+str_size,' ',LINE_BUFF-str_size);
+							}
+							str_size = strlen(buf2);
+							if(str_size>0){
+								strncat(buf_final,buf2,str_size);
+								memset(buf_final+LINE_BUFF+str_size,' ',LINE_BUFF-str_size);
+							}
+							write(fd_lcd, &buf_final, MAX_BUFF);
+
+				// FND_DEVICE 작성
+							for(i=43;i<47;i++){
+								buf[i-43]=shmaddr[i];}
+							buf[4]='\0';
+							retval = write(fd_fnd, &buf, 4);
+							if(retval<0){
+								printf("Write Error!\n");
+								return -1;
+							}
+				// BUZZER_DEVICE 작성
+							if(shmaddr[47]==1){
+								int retval;
+								unsigned char data;
+
+								data=1;
+								retval=write(fd_buz,&data,1);
+								if(retval<0){
+									printf("Write Error!\n");
+									return -1;
+								}
+								delay(10);
+								data=0;
+								retval=write(fd_buz,&data,1);
+								if(retval<0){
+									printf("Write Error!\n");
+									return -1;
+								}
+								delay(10);
+							}
+							break;	// END OF MODE5
+
 // ERROR! NON EXISTED MODE!
 						default :
 							printf("Error on calculating mode number\n");
 							break;
 					}// END OF SWITCH
-					printf("output - mode = %d\tdot_matrix = [%d][%d][%d][%d][%d][%d][%d][%d][%d][%d]\n",
-							shmaddr[0],shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4],shmaddr[5],
-							shmaddr[6],shmaddr[7],shmaddr[8],shmaddr[9],shmaddr[10]);
 
+					printf("output - mode = %d\nlcd_up   = [%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c]\nlcd_down = [%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c][%c]\n",
+							shmaddr[0],
+							shmaddr[1],shmaddr[2],shmaddr[3],shmaddr[4],shmaddr[5],shmaddr[6],shmaddr[7],shmaddr[8],
+							shmaddr[9],shmaddr[10],shmaddr[11],shmaddr[12],shmaddr[13],shmaddr[14],shmaddr[15],shmaddr[16],
+							shmaddr[17],shmaddr[18],shmaddr[19],shmaddr[20],shmaddr[21],shmaddr[22],shmaddr[23],shmaddr[24],
+							shmaddr[25],shmaddr[26],shmaddr[27],shmaddr[28],shmaddr[29],shmaddr[30],shmaddr[31],shmaddr[32]);
 			
 			// clear shared memory
 					for(i=0;i<SHM_SIZE;i++){
