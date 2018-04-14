@@ -285,6 +285,7 @@ int main(){
 						case MODE5 : 
 							delay(2);
 							mode5(shmaddr);
+							break;
 						default :	// 이런 경우는 없음
 							printf("mode value is wrong. check INPUT PROCESS or MAIN PROCESS\n");
 							break;
@@ -452,25 +453,35 @@ int main(){
 								dot_temp[i]=shmaddr[i+1];
 							str_size = sizeof(dot_temp);
 							write(fd_dot,dot_temp,str_size);
+							if(shmaddr[47]==2) 		delay(10);	// 맞으면 O표시를 1초동안 함 -> X표시는 아래 부저에서 딜레이 처리
 				// LCD_DEVICE
 							//buffer를 이용하여 shmaddr[0]에 적힌 모드부분 제거
 							for(i=0;i<=MAX_BUFF;i++){ //buffer 청소
 								buf[i]=0;
 								buf2[i]=0;
 							}
+				/////////////////     shmaddr에서 buf로 옮겨오는 과정   /////////////////////////
+						if(shmaddr[48]!=true){					// 수도, 산수 모드
 							for(i=0;i<17;i++){
 								buf[i] = shmaddr[i+11];
-								printf("%c",buf[i]); 	// 문제 해결- MAIN PROCESS에서 mode1 최초진입 아닐때 shmaddr[5]='\0'했길래 수정
 							}
 							printf("\n");
 							for(i=0;i<17;i++){
 								buf2[i] = shmaddr[i+27];
-								printf("%c",buf[i]);
 							}
 							printf("\n");
+						}// end of if(수도, 산수)
+						else{									// 속담 모드
+							for(i=0;i<33;i++){
+								buf[i] = shmaddr[i+11];
+							}
+						}// end of else(속담)
+				///////////////////////////////////////////////////////////////////////////
 							// LCD 작성 시작
 							char buf_final[33];
 							memset(buf_final,0,sizeof(buf_final));
+				//////////////////     LCD에 쓰기전 최종 buf에 정리 과정     //////////////////////////////
+						if(shmaddr[48]!=true){					// 수도, 산수 모드
 							str_size = strlen(buf);
 							if(str_size>0){
 								strncat(buf_final,buf,str_size);
@@ -481,7 +492,17 @@ int main(){
 								strncat(buf_final,buf2,str_size);
 								memset(buf_final+LINE_BUFF+str_size,' ',LINE_BUFF-str_size);
 							}
+						}// end of if(수도, 산수)
+						else{									// 속담 모드
+							str_size = strlen(buf);
+							if(str_size>0){
+								strncat(buf_final,buf,str_size);
+								memset(buf_final+str_size,' ',MAX_BUFF-str_size);
+							}
+						}// end of else(속담)
+				////////////////////////////////////////////////////////////////////////////
 							write(fd_lcd, &buf_final, MAX_BUFF);
+						
 
 				// FND_DEVICE 작성
 							for(i=43;i<47;i++){

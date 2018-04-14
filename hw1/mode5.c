@@ -48,7 +48,8 @@
 #define CLOCK_PER_SEC 100000
 
 __inline void update_shm_mode5(char *shmaddr,int dot_mat_num, /*LCD 변수(상하 2개)*/
-								char *problem_msg, char *example_msg, int fnd_counter, unsigned char mode_sign_matrix[][10]){
+								char *problem_msg, char *example_msg, int fnd_counter, unsigned char mode_sign_matrix[][10],
+								bool saying, bool show_example){
 	/*shmaddr[1~10]  : dot matrix
 	  shmaddr[11~42] : LCD text
 	  shmaddr[43~46] : FNd counter
@@ -59,12 +60,23 @@ __inline void update_shm_mode5(char *shmaddr,int dot_mat_num, /*LCD 변수(상�
 	for(i=1;i<=10;i++)
 		shmaddr[i] = mode_sign_matrix[dot_mat_num][i-1];
 	
-	// 2. Process LCD text
-	for(i=11;i<=26;i++)
-		shmaddr[i] = problem_msg[i-11];
-	for(i=27;i<=42;i++)
-		shmaddr[i] = example_msg[i-27];
-
+	// 2. Process LCD text - 수도,산수 / 속담
+	if(saying==false){	// 수도, 산수 문제
+		for(i=11;i<=26;i++)
+			shmaddr[i] = problem_msg[i-11];
+		for(i=27;i<=42;i++)
+			shmaddr[i] = example_msg[i-27];
+	}
+	else{	// 속담 문제
+		if(show_example==false){	// 문제 표시 32 글자
+			for(i=11;i<=42;i++)
+				shmaddr[i] = problem_msg[i-11];
+		}
+		else{						// 보기 표시 32 글자
+			for(i=11;i<=42;i++)
+				shmaddr[i] = example_msg[i-11];
+		}
+	}
 	// 3. Process answer counter on FND
 	i=0;
 	if(fnd_counter>9999) fnd_counter=0; // 9999를 넘어가면 0으로 초기화
@@ -87,7 +99,13 @@ __inline void update_shm_mode5(char *shmaddr,int dot_mat_num, /*LCD 변수(상�
 	}
 
 	// 4. Process Buzzer flag
-	if(dot_mat_num==WRONG) shmaddr[47] = 1;
+	if(dot_mat_num==WRONG) 			shmaddr[47] = 1;
+	else if(dot_mat_num==CORRECT)	shmaddr[47] = 2;
+	else							shmaddr[47] = 0;	// WRONG이나 CORRECT가 아닌 경우
+
+	// 5. Saying mode flag
+	if(saying==true) shmaddr[48] = 1;
+	else			 shmaddr[48] = 0;
 }
 
 // Global variables - When fpga mode(not game mode) is changed, these must be initialized.
@@ -95,49 +113,37 @@ int game_mode = 0;		// Range is 0~2
 int question_number[3] = {0,};  // Question number for each game mode. Range is 0~2
 int answer_counter = 0;
 int enter_mode5 = 0;
-
+bool saying = false;			// 속담모드에서 사용(game_mode==2면 saying을 true로 만듦)
+bool show_example = false;		// 속담모드에서 사용(false:문제보여줌 / true:보기보여줌)
 ///////////////////////////////////////////////////////////////////////////////////////////
 int mode5(char *shmaddr){
 
 // Array for problem set, example set, solution set
-char problem[2][10][17] = {
+char problem[3][10][33] = {
 // mode1
 	{/*1*/{"KOREA"},/*2*/{"HUNGARY"},/*3*/{"CHINA"},/*4*/{"CANADA"},/*5*/{"BRAZIL"},/*6*/{"JAPAN"},/*7*/{"ALGERIA"},/*8*/{"AUSTRALIA"},/*9*/{"UK"},/*10*/{"GREECE"}},
 // mode2
-	{/*1*/{"2+3"},/*2*/{"3*9"},/*3*/{"1+2*8"},/*4*/{"2*2+8"},/*5*/{"3*2-1*4"},/*6*/{"4/2*3+2"},/*7*/{"9*6-8/2"},/*8*/{"0+3*0"},/*9*/{"10/2*8"},/*10*/{"1+2+3+4+5"}}
-// mode1
-//	{/*1*/{"KOREA           "},/*2*/{"HUNGARY         "},/*3*/{"CHINA           "},/*4*/{"CANADA          "},/*5*/{"BRAZIL          "},/*6*/{"JAPAN           "},/*7*/{"ALGERIA         "},/*8*/{"AUSTRALIA       "},/*9*/{"UK              "},/*10*/{"GREECE          "}},
-// mode2
-//	{/*1*/{"2+3             "},/*2*/{"3*9             "},/*3*/{"1+2*8           "},/*4*/{"2*2+8           "},/*5*/{"3*2-1*4"},/*6*/{"4 / 2 * 3 + 2"},/*7*/{"9 * 6 - 8 / 2"},/*8*/{"0 + 3 * 0"},/*9*/{"10 / 2 * 8"},/*10*/{"1 + 2 + 3 + 4 + 5"}}
-};
-
-//char saying[1][10][33] = {
+	{/*1*/{"2+3=?"},/*2*/{"3*9=?"},/*3*/{"1+2*8=?"},/*4*/{"2*2+8=?"},/*5*/{"3*2-1*4=?"},/*6*/{"4/2*3+2=?"},/*7*/{"9*6-8/2=?"},/*8*/{"0+3*0=?"},/*9*/{"10/2*8=?"},/*10*/{"1+2+3+4+5=?"}},
 // mode3
-//	{/*1*/{"Don’t judge a ( ) by its cover"},/*2*/{"Too many ( ) spoil the broth"},/*3*/{"Many hands make ( ) work"},/*4*/{"There is no place like ( )"},/*5*/{"Easy ( ), easy go"},/*6*/{"( ) is the best policy"},/*7*/{"( ) makes perfect"},/*8*/{"The more, the ( )"},/*9*/{"( ) before you leap"},/*10*/{"The early bird catches the ( )"}}
-//};
+	{/*1*/{"Do not judge a ( ) by its cover"},/*2*/{"Too many ( ) spoil the broth"},/*3*/{"Many hands make ( ) work"},/*4*/{"There is no place like ( )"},/*5*/{"Easy ( ), easy go"},/*6*/{"( ) is the best policy"},/*7*/{"( ) makes perfect"},/*8*/{"The more, the ( )"},/*9*/{"( ) before you leap"},/*10*/{"The early bird catches the ( )"}}
+};
 
 int solution[3][10] = {	// SW1의 값과 직접 비교하기 때문에 1 또는 2로 판단
 // mode1 - Capital
 	{1,2,2,1,2,2,1,2,1,2},
-// mode2 - Sayings
-	{1,2,2,1,2,2,1,2,1,1},
-// mode3 - Calculation
-	{2,1,1,1,1,2,1,2,1,1}
+// mode2 - Calculation
+	{2,1,1,1,1,2,1,2,1,1},
+// mode3 - Sayings
+	{1,2,2,1,2,2,1,2,1,1}
 };
 
 char example[3][10][17] = {	// nul 문자 제외하고 16문자로 맞춤
 // mode1 - Capital
-	{ /*1*/{"Seoul / Pusan"}, /*2*/{"Oslo / Budapest"}, /*3*/{"Oslo / Beijing"}, /*4*/{"Ottawa / Rome"}, /*5*/{"Rio / Brasilia"}, /*6*/{"Kyoto / Tokyo"}, /*7*/{"Algiers / Cairo"}, /*8*/{"Dili / Canberra"}, /*9*/{"London / LA"}, /*10*/{"Paris / Athens"} },
+	{ /*1*/{"Seoul / Pusan"}, /*2*/{"Oslo / Budapest"}, /*3*/{"Paris / Beijing"}, /*4*/{"Ottawa / Rome"}, /*5*/{"Rio / Brasilia"}, /*6*/{"Kyoto / Tokyo"}, /*7*/{"Algiers / Cairo"}, /*8*/{"Dili / Canberra"}, /*9*/{"London / LA"}, /*10*/{"Paris / Athens"} },
 // mode2 - Calculation
 	{ /*1*/{"4 / 5"}, /*2*/{"27 / 28"}, /*3*/{"17 / 18"}, /*4*/{"12 / 13"}, /*5*/{"2 / 12"}, /*6*/{"7 / 8"}, /*7*/{"50 / 24"}, /*8*/{"9 / 0"}, /*9*/{"40 / 1"}, /*10*/{"15 / 16"} },
 // mode3 - Syaings
 	{ /*1*/{"book / cook"}, /*2*/{"books / cooks"}, /*3*/{"heavy / light"}, /*4*/{"home / house"}, /*5*/{"get / come"}, /*6*/{"Be / Honesty"}, /*7*/{"Practice / Get"}, /*8*/{"bitter / better"}, /*9*/{"Look / Watch"}, /*10*/{"worm / warm"} }
-// mode1 - Capital
-//	{ /*1*/{"Seoul / Pusan   "}, /*2*/{"Oslo / Budapest"}, /*3*/{"Oslo / Beijing  "}, /*4*/{"Ottawa / Rome   "}, /*5*/{"Rio / Brasilia  "}, /*6*/{"Kyoto / Tokyo   "}, /*7*/{"Algiers / Cairo "}, /*8*/{"Dili / Canberra "}, /*9*/{"London / LA    "}, /*10*/{"Paris / Athens  "} },
-// mode2 - Calculation
-//	{ /*1*/{"4 / 5           "}, /*2*/{"27 / 28         "}, /*3*/{"17 / 18         "}, /*4*/{"12 / 13         "}, /*5*/{"2 / 12          "}, /*6*/{"7 / 8           "}, /*7*/{"50 / 24         "}, /*8*/{"9 / 0           "}, /*9*/{"40 / 1          "}, /*10*/{"15 / 16         "} },
-// mode3 - Syaings
-//	{ /*1*/{"book / cook     "}, /*2*/{"books / cooks   "}, /*3*/{"heavy / light   "}, /*4*/{"home / house   "}, /*5*/{"get / come      "}, /*6*/{"Be / Honesty    "}, /*7*/{"Practice / Get  "}, /*8*/{"bitter / better "}, /*9*/{"Look / Watch    "}, /*10*/{"worm / warm     "} }
 };
 
 
@@ -154,7 +160,7 @@ unsigned char mode_sign_matrix[5][10] = {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 	int i;
 	int select;	// 선택한 보기
-	// Initialize global variables when comes from other mode(mode1 or mode4)
+//0. 모드 진입시 변수 초기화  Initialize global variables when comes from other mode(mode1 or mode4)
 	if(shmaddr[1]==VOL_PLUS || shmaddr[1]==VOL_MINUS){
 		game_mode = 0;
 		for(i=0;i<3;i++){
@@ -162,21 +168,21 @@ unsigned char mode_sign_matrix[5][10] = {
 		}
 		answer_counter = 0;
 		enter_mode5 = 0;
+		saying = false;
+		show_example = false;
 	}
 // 1. shmaddr으로 들어온 스위치를 분석하여 작업 수행
 	switch(shmaddr[2]){
-		case SW1 : // 게임모드 0번 선택, 보기 1번
-			if(enter_mode5==0)	game_mode=0;	// 게임모드 0번 선택
-			else				select=1;		//     보기 1번 선택
+		case SW1 : // 보기 1번
+			select=1;
 			break;
-		case SW2 : // 게임모드 1번 선택, 보기 2번
-			if(enter_mode5==0)	game_mode=1;	// 게임모드 1번 선택
-			else				select=2;		//     보기 2번 선택
+		case SW2 : // 보기 2번
+			select=2;
 			break;
-		//case SW3 : // 게임모드 2번 선택 // 속담 문제에서 보기 볼때 선택
-		//	if(enter_mode5==0)  game_mode=2;
-		//	else				select=3;
-		//	break;
+		case SW3 : // 속담 문제에서 보기 볼때 선택
+			select=3;
+			show_example = !show_example;
+			break;
 		case RESET_COUNTER :
 			select = 5;
 			answer_counter = 0;
@@ -186,7 +192,15 @@ unsigned char mode_sign_matrix[5][10] = {
 			break;
 		case MODE_CHANGE :
 			game_mode++;
-			if(game_mode>2) game_mode=0;
+			if(game_mode>2)  game_mode=0;
+			// 속담 모드설정
+			if(game_mode==2){
+				saying = true;
+			}
+			else{// 비속담 모드이면 속담 관련 플래그 초기화
+				saying = false;
+				show_example = false;
+			}
 			select = 9;
 			break;
 		default :	// SW4, SW7,SW8,NO_SWITCH  // SW3 속담모드 잠시 보류
@@ -194,7 +208,7 @@ unsigned char mode_sign_matrix[5][10] = {
 			break;
 	}// end of switch for analyzing first switch
 // 2. Process things - Judge the answer by 'select'
-	// 1) Dot matrix 정하기											-- dot_mat_num 처리
+// 1) Dot matrix 정하기											-- dot_mat_num 처리
 	int dot_mat_num;	// OX표시는 아래 정답처리 부분에서 덮어쓰기로 처리
 	switch(game_mode){
 		case MODE0 :
@@ -207,13 +221,15 @@ unsigned char mode_sign_matrix[5][10] = {
 			dot_mat_num = MODE2;
 			break;
 	}// end of switch(game_mode)
-	// 2) 문제 및 보기 출제(정답 입력 전까지 그 LCD에 내용을 유지해야함		--  problem_msg 처리
+
+// 2) 문제 및 보기 출제(정답 입력 전까지 그 LCD에 내용을 유지해야함		--  problem_msg 처리
 	char problem_msg[17];		// 수도와 산수 문제용
 	//char problem_msg_long[33];	// 속담 문제용
 	char example_msg[17];
 	strcpy(problem_msg, problem[game_mode][question_number[game_mode]]);
 	strcpy(example_msg, example[game_mode][question_number[game_mode]]);
-	// 3) 정답 처리(NO_SWITCH 포함 사용하지 않는 키 걸러내야함)		--  answer_counter 처리
+
+// 3) 정답 처리(NO_SWITCH 포함 사용하지 않는 키 걸러내야함)		--  answer_counter 처리
 	bool correct;
 	if(select == SW1 || select == SW2){	// SW1, SW2에 대해서만 정답처리
 		if(select == solution[game_mode][question_number[game_mode]])
@@ -235,10 +251,12 @@ unsigned char mode_sign_matrix[5][10] = {
 	}
 
 // 3. Update shared memory
-	update_shm_mode5(shmaddr, dot_mat_num, problem_msg, example_msg, answer_counter,mode_sign_matrix);
+	update_shm_mode5(shmaddr, dot_mat_num, problem_msg, example_msg, answer_counter,mode_sign_matrix,saying,show_example);
 	if(select==1 || select==2){ // 보기 1번 또는 2번 선택 -> 다음문제로 넘어가도록 문제번호 업데이트
 		question_number[game_mode]++; 
 		if(question_number[game_mode]>9) question_number[game_mode] = 0;
+		show_example = false; // 속담 모드에서는 이걸 풀어줘야 다음문제에서 바로 문제가 나옴
 	}// end of if
+	enter_mode5++;
 	return 0;
 }
