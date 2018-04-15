@@ -113,6 +113,7 @@ int mode2(char *shmaddr){
 		num=0;
 		base_mode=BASE10; // 모드 진입 시 항상 10진수로 시작
 	}
+// 1. 진수를 설정한다.	
 	switch(base_mode){
 		case BASE10 :
 			base = 10;
@@ -127,6 +128,7 @@ int mode2(char *shmaddr){
 			base = 2;
 			break;
 	}
+// 2. 진수에 따라 입력된 키를 처리한다.
 	switch(shmaddr[2]){
 		case SW1 :
 			base_mode++;
@@ -200,6 +202,7 @@ int mode2(char *shmaddr){
 		default :	// 다른 키들은 무시
 			break;
 	}// END OF SWITCH
+//3. shared memory를 업데이트한다.
 	update_shm_mode2(shmaddr, num, base);
 	return 0;
 }

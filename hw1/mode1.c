@@ -65,11 +65,12 @@ int mode1(char *shmaddr){
 		hour = gm_time_string->tm_hour; 	// update hour, minute variables
 		minute = gm_time_string->tm_min;
 	}
-
+// 1. 시간 변경 모드를 체크한다.
 	if(shmaddr[2]==SW1){	// SW1의 경우 flag 바꿔주기
 		if(flag_clock_change==false) flag_clock_change=true;
 		else						 flag_clock_change=false;
 	}
+// 2-1. 시간 변경 모드인 경우 시간을 변경한다.
 	if(flag_clock_change==true){	//SW1으로 변경모드에 들어감
 		switch(shmaddr[2]){
 			case SW1 :
@@ -106,6 +107,7 @@ int mode1(char *shmaddr){
 		}
 		update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 	}// END of if(flag_clock_change==true)
+// 2-2. 시간 변경모드가 아닌 경우 기존 시간을 가만히 둔다.
 	else{ // flag_clock_change==false - 모드 처음 진입과 변경 내역 저장을 제외하고는 아무것도 안함
 		switch(shmaddr[2]){
 			case SW1 :	// flag가 true에서 false로 바뀌면 저장해야함.
@@ -135,6 +137,7 @@ int mode1(char *shmaddr){
 					break;
 				}
 		}
+// 3. shared memory를 업데이트한다.
 		update_shm_mode1(shmaddr, hour, minute,flag_clock_change);
 	}// END of else(보드 시간으로 초기화)
 	return 0;

@@ -28,7 +28,7 @@
 #include "mode5.h"
 #include "dot_font.h"
 
-#define SHM_SIZE 1024
+#define SHM_SIZE 48
 #define BUFF_SIZE 64
 #define BACK 158
 #define VOL_PLUS 115
